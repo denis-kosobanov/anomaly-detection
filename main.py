@@ -15,4 +15,4 @@ if __name__ == "__main__":
     # TODO: Функия предобработки
     df = generate_anomaly_data(df, WINDOW_COUNT, WINDOW_SIZE_LIST)
     anomaly_graph(df)
-    # plot_temp_anomaly(df)
+    plot_temp_anomaly(df)
