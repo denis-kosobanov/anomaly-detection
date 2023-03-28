@@ -1,36 +1,55 @@
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objs as go
+import plotly.offline as pyo
 
 
-def anomaly_graph(df: pd.DataFrame) -> None:
-    # Separation of data into normal and abnormal
-    normal_data = df[df['anomaly'] == 0]
-    anomaly_data = df[df['anomaly'] == 1]
+def create_temperature_anomalies_plot(df: pd.DataFrame) -> None:
+    # Создаем график
+    fig = go.Figure()
 
-    # Настройка размера графика
-    plt.figure(figsize=(15, 5))
+    # Копируем исходный dataframe
+    copy_df = df.copy()
 
-    # Drawing a graph
-    plt.plot(normal_data.index, normal_data['temp'], 'bo-', label='Normal')
-    plt.plot(anomaly_data.index, anomaly_data['temp'], 'ro-', label='Anomaly')
+    # Создаем новый столбец 'datetime'
+    copy_df['datetime'] = pd.to_datetime(copy_df['date'].astype(str) + ' ' + copy_df['time'].astype(str))
 
-    # Display axis labels and title
-    plt.xlabel('Index')
-    plt.ylabel('Temperature')
-    plt.title('Temperature vs Index')
-    plt.legend()
+    # Добавляем основной график температуры
+    fig.add_trace(go.Scatter(x=copy_df['datetime'], y=copy_df['temp'], mode='lines+markers', name='Температура'))
 
-    # Graph display
-    plt.show()
+    # Добавляем маркеры для аномалий
+    anomalies = copy_df[copy_df['anomaly'] == 1.0]
+    fig.add_trace(
+        go.Scatter(x=anomalies['datetime'], y=anomalies['temp'], mode='markers', marker=dict(color='red', size=10),
+                   name='Аномалия'))
+
+    # Настраиваем заголовки и оси графика
+    fig.update_layout(title='Температура и аномалии', xaxis_title='Date', yaxis_title='Температура')
+
+    # Выводим график
+    pyo.plot(fig)
 
 
-def plot_temp_anomaly(df):
-    a = df.loc[df['anomaly'] == 0, 'temp']
-    b = df.loc[df['anomaly'] == 1, 'temp']
+def create_new_rows_plot(df: pd.DataFrame) -> None:
+    # Создаем график
+    fig = go.Figure()
 
-    fig, axs = plt.subplots()
-    axs.hist([a, b], bins=32, stacked=True, color=['blue', 'red'])
-    plt.legend()
-    axs.set_xlabel("Температура")
-    axs.set_ylabel("Кол-во записей")
-    plt.show()
+    # Копируем исходный dataframe
+    copy_df = df.copy()
+
+    # Создаем новый столбец 'datetime'
+    copy_df['datetime'] = pd.to_datetime(copy_df['date'].astype(str) + ' ' + copy_df['time'].astype(str))
+
+    # Добавляем основной график температуры
+    fig.add_trace(go.Scatter(x=copy_df['datetime'], y=copy_df['temp'], mode='lines+markers', name='Температура'))
+
+    # Добавляем маркеры для новых строк
+    new_rows = copy_df[copy_df['new'] == 1.0]
+    fig.add_trace(
+        go.Scatter(x=new_rows['datetime'], y=new_rows['temp'], mode='markers', marker=dict(color='green', size=15),
+                   name='Новое значение'))
+
+    # Настраиваем заголовки и оси графика
+    fig.update_layout(title='Температура и новые значения', xaxis_title='Date', yaxis_title='Температура')
+
+    # Выводим график
+    pyo.plot(fig)

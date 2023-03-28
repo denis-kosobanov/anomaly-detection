@@ -12,7 +12,9 @@ from graph import *
 
 if __name__ == "__main__":
     df = selected_data("data.txt", '2022-01-01', '2022-04-30')
-    # TODO: Функия предобработки
+    df = reindex_and_interpolate_temp(df)
+    create_new_rows_plot(df)
+    df = df.drop(columns=['new'])
     df = generate_anomaly_data(df, WINDOW_COUNT, WINDOW_SIZE_LIST)
-    anomaly_graph(df)
-    plot_temp_anomaly(df)
+    create_temperature_anomalies_plot(df)
+    print(df)
