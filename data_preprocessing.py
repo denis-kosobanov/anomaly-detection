@@ -1,21 +1,4 @@
-import numpy as np
 import pandas as pd
-
-
-def interpolate_time_series(x_data, y_data, degree):
-    # Получаем индексы пропущенных значений (np.nan)
-    nan_idxs = np.isnan(y_data)
-
-    # Выполняем полиномиальную интерполяцию с заданным интерполяционным полиномом
-    coefficients = np.polyfit(x_data[~nan_idxs], y_data[~nan_idxs], degree)
-
-    # Вычисляем интерполированные значения y для пропущенных значений x
-    interpolated_y_values = np.polyval(coefficients, x_data[nan_idxs])
-
-    # Заменяем пропущенные значения интерполированными значениями
-    y_data[nan_idxs] = interpolated_y_values
-
-    return y_data
 
 
 def selected_data(path: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -42,22 +25,50 @@ def selected_data(path: str, start_date: str, end_date: str) -> pd.DataFrame:
     return data
 
 
-def check_gaps(df: pd.DataFrame):
-    # Преобразование даты в тип данных datetime и сортировка
-    df['date'] = pd.to_datetime(df['date'])
-    df.sort_values(by='date', inplace=True)
+def reindex_and_interpolate_temp(df: pd.DataFrame) -> pd.DataFrame:
+    # Объединение столбцов 'date' и 'time' и преобразование в datetime
+    df['datetime'] = pd.to_datetime(df['date'].astype(str) + ' ' + df['time'].astype(str))
+    df = df.drop(columns=['date', 'time'])
 
-    # Вычисление разницы между датами
-    df['date_diff'] = df['date'].diff().dt.days
+    # Разница между соседними записями
+    df['diff'] = df['datetime'].diff().dt.total_seconds() / 60
 
-    # Удаление первой строки, т.к. нам не нужен date_diff для первой даты
-    df = df.iloc[1:]
+    df['new'] = 0.0
 
-    # Проверка на пропуски с разницей в один день и один месяц
-    day_gaps = df[df['date_diff'] != 1]
-    month_gaps = df[df['date_diff'] != 30]
-    # print("Пропуски с разницей в один день:")
-    # print(day_gaps[df["date_diff"] != 0.0])
-    # print("Пропуски с разницей в один месяц:")
-    # print(month_gaps[df["date_diff"] != 0.0])
-    # month_gaps.to_csv(r'month_gaps.csv', index=False)
+    # Удаление записей с разницей меньше 10 минут
+    df = df[df['diff'] >= 10].reset_index(drop=True)
+
+    # Создание промежуточных записей
+    new_rows = []
+    for i in range(len(df) - 1):
+        row1 = df.iloc[i]
+        row2 = df.iloc[i + 1]
+        diff = row2['diff'] - 10
+        num_new_rows = int(diff // 10)
+        for j in range(num_new_rows):
+            new_row = row1.copy()
+            new_row['datetime'] += pd.to_timedelta(10 * (j + 1), unit='m')
+            new_row['temp'] = None
+            new_row['new'] = 1.0
+            new_rows.append(new_row)
+
+    # Добавление промежуточных записей в исходный DataFrame
+    df = df.append(new_rows, ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
+
+    # Приведение столбца 'temp' к типу float
+    df['temp'] = df['temp'].astype(float)
+
+    # Интерполяция пропущенных значений 'temp'
+    df['temp'] = df['temp'].interpolate()
+
+    # Разделение столбца 'datetime
+    df['date'] = df['datetime'].dt.date
+    df['time'] = df['datetime'].dt.time
+
+    # Удаление столбца 'diff' и 'datetime'
+    df = df.drop(columns=['diff', 'datetime'])
+
+    # Столбцы в нужном порядке
+    df = df[['date', 'time', 'temp', 'anomaly', 'new']]
+
+    return df
