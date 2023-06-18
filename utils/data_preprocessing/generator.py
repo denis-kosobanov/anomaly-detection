@@ -5,7 +5,7 @@ import statistics as statistics
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from settings import *
+from utils.data_preprocessing.settings import *
 
 
 def generate_anomaly_data(data: pd.DataFrame, window_count: int, window_size_list: list) -> pd.DataFrame:
