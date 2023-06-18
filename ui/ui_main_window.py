@@ -51,9 +51,15 @@ class Ui_MainWindow(object):
         self.preproc_label.setAlignment(QtCore.Qt.AlignCenter)
         self.preproc_label.setObjectName("preproc_label")
         self.preproc_layout.addWidget(self.preproc_label)
-        self.count_records_label = QtWidgets.QLabel(self.centralwidget)
-        self.count_records_label.setObjectName("count_records_label")
-        self.preproc_layout.addWidget(self.count_records_label)
+        self.count_records_layout = QHBoxLayout()
+        self.count_records_layout.setObjectName(u"count_records_layout")
+        self.count_records_label = QLabel(self.centralwidget)
+        self.count_records_label.setObjectName(u"count_records_label")
+        self.count_records_layout.addWidget(self.count_records_label)
+        self.count_records = QLabel(self.centralwidget)
+        self.count_records.setObjectName(u"count_records")
+        self.count_records_layout.addWidget(self.count_records)
+        self.preproc_layout.addLayout(self.count_records_layout)
         self.preproc_button = QtWidgets.QPushButton(self.centralwidget)
         self.preproc_button.setObjectName("preproc_button")
         self.preproc_layout.addWidget(self.preproc_button)
@@ -289,6 +295,9 @@ class Ui_MainWindow(object):
         self.log_text_edit.append("точность по pr " + str(fig[2][2]))
         self.log_text_edit.append("точность по f1 " + str(fig[2][3]))
 
+    # Обновить строку счеткика записей
+    def update_data_counter(self):
+        self.count_records.setText(str(len(self.data)))
 
     def veltest(self):
         if self.model_rb_1.isChecked() == True:
@@ -307,6 +316,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         fname = QtWidgets.QFileDialog.getOpenFileName()
         self.data = pd.read_csv(fname[0], sep=';')
+        self.update_data_counter()
         self.filename_label.setText(_translate("MainWindow", fname[0]))
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
@@ -321,7 +331,6 @@ class Ui_MainWindow(object):
         html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
-        self.log_text_edit.append("отррыт файл " + fname[0])
+        self.log_text_edit.append("открыт файл " + fname[0])
         return fname
 
-        self.log_text_edit.append("открыт файл "+ fname[0])
