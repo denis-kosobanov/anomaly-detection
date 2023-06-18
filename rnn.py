@@ -12,13 +12,13 @@ The dataset contains India's monthly average temperature (°C) recorded for a pe
 from sklearn import preprocessing
 from utils.data_preprocessing.generator import *
 import plotly.graph_objects as go
-
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
 
 def rnn_learn(DATA):
     df = DATA
-    # ensemble = pd.read_csv(r"outputs/ensemble_out_316.csv", sep=',')
-    # df["anomaly"] = 0
-    # df["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
     # print(df["anomaly"].value_counts())
     # if (GEN_ANOMALY == True):
     #     df = generate_anomaly_data(df, WINDOW_COUNT, WINDOW_SIZE_LIST)
@@ -53,12 +53,12 @@ def rnn_learn(DATA):
     testdatacut = testdatasize + unroll_length  + 1
     print(data_n)
     #train data
-    x_train = data_n[0:-prediction_time-testdatacut].values
-    y_train = data_n[prediction_time:-testdatacut  ][0].values
+    x_train = data_n[0:-prediction_time - testdatacut].values
+    y_train = data_n[prediction_time:-testdatacut][0].values
 
     # test data
-    x_test = data_n[0-testdatacut:-prediction_time].values
-    y_test = data_n[prediction_time-testdatacut:  ][0].values
+    x_test = data_n[0 - testdatacut:-prediction_time].values
+    y_test = data_n[prediction_time - testdatacut:][0].values
 
 
     def unroll(data,sequence_length=24):
@@ -68,10 +68,10 @@ def rnn_learn(DATA):
         return np.asarray(result)
 
     # adapt the datasets for the sequence data shape
-    x_train = unroll(x_train,unroll_length)
-    x_test  = unroll(x_test,unroll_length)
+    x_train = unroll(x_train, unroll_length)
+    x_test = unroll(x_test, unroll_length)
     y_train = y_train[-x_train.shape[0]:]
-    y_test  = y_test[-x_test.shape[0]:]
+    y_test = y_test[-x_test.shape[0]:]
     print(x_train)
     # see the shape
     print("x_train", x_train.shape)
@@ -125,7 +125,7 @@ def rnn_learn(DATA):
 
     print(diff)
     diff = pd.Series(diff)
-    number_of_outliers = int(0.01*len(diff))
+    number_of_outliers = int(0.05*len(diff))
     threshold = diff.nlargest(number_of_outliers).min()
 
     test = (diff >= threshold).astype(int)
@@ -135,33 +135,31 @@ def rnn_learn(DATA):
     # df['anomaly_rnn'] = test
     print(df['anomaly_rnn'].value_counts())
 
-    a = df.loc[df['anomaly_rnn'] == 1, ['timestamp', 'temp']]
+    a = df.loc[df['anomaly_rnn'] == 1, ['time_epoch', 'temp']]
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df[len(df)-TEST_SIZE: ]['timestamp'], y=df[len(df)-TEST_SIZE: ]['temp'],
+    fig.add_trace(go.Scatter(x=df[len(df)-TEST_SIZE: ]['time_epoch'], y=df[len(df)-TEST_SIZE: ]['temp'],
                         mode='lines',
                         name='Временной ряд'))
-    fig.add_trace(go.Scatter(x=a['timestamp'], y=a['temp'],
+    fig.add_trace(go.Scatter(x=a['time_epoch'], y=a['temp'],
                         mode='markers',
                         name='Аномалия'))
     fig.update_layout(showlegend=True)
 
-    return [fig, z, prediction_time]
+    acc_output = []
 
+    if GEN_ANOMALY == True:
+        acc_output.append(accuracy_score(df[0 - testdatacut:-prediction_time]['anomaly'],
+                             df[0 - testdatacut:-prediction_time]['anomaly_rnn']))
+        acc_output.append(roc_auc_score(df[0 - testdatacut:-prediction_time]['anomaly'],
+                            df[0 - testdatacut:-prediction_time]['anomaly_rnn']))
+        acc_output.append(recall_score(df[0 - testdatacut:-prediction_time]['anomaly'],
+                           df[0 - testdatacut:-prediction_time]['anomaly_rnn']))
+        acc_output.append(f1_score(df[0 - testdatacut:-prediction_time]['anomaly'],
+                       df[0 - testdatacut:-prediction_time]['anomaly_rnn']))
 
+    return [fig, z, acc_output]
 
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import accuracy_score
-
-# print(df['anomaly'].value_counts(()))
-# if GEN_ANOMALY == True:
-#     print(accuracy_score(df[0 - testdatacut:-prediction_time]['anomaly'],
-#                         df[0 - testdatacut:-prediction_time]['anomaly_rnn']))
-#     print(roc_auc_score(df[0-testdatacut:-prediction_time]['anomaly'], df[0-testdatacut:-prediction_time]['anomaly_rnn']))
-#     print(recall_score(df[0-testdatacut:-prediction_time]['anomaly'], df[0-testdatacut:-prediction_time]['anomaly_rnn']))
-#     print(f1_score(df[0-testdatacut:-prediction_time]['anomaly'], df[0-testdatacut:-prediction_time]['anomaly_rnn']))
 
 
 # print(roc_auc_score(df_out[prediction_time-testdatacut:  ]['target'], df[prediction_time-testdatacut:  ]['anomaly_rnn']))

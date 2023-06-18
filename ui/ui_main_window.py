@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QScrollArea, QTextEdit
+from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout, QRadioButton
 
 import pandas as pd
 import plotly
@@ -146,15 +146,31 @@ class Ui_MainWindow(object):
         self.main_par_layout.addLayout(self.models_layout)
         self.learn_par_layout = QtWidgets.QVBoxLayout()
         self.learn_par_layout.setObjectName("learn_par_layout")
-        self.learn_par_gb = QtWidgets.QGroupBox(self.centralwidget)
-        self.learn_par_gb.setObjectName("learn_par_gb")
-        self.gridLayout_2 = QtWidgets.QGridLayout(self.learn_par_gb)
-        self.gridLayout_2.setObjectName("gridLayout_2")
+
+        # Групп бокс параметры обучения
+        self.learn_par_gb = QGroupBox(self.centralwidget)
+        self.learn_par_gb.setObjectName(u"learn_par_gb")
+        self.horizontalLayout = QHBoxLayout(self.learn_par_gb)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.learn_par_gb_layout = QGridLayout()
+        self.learn_par_gb_layout.setObjectName(u"learn_par_gb_layout")
+        self.epoch_lineEdit = QLineEdit(self.learn_par_gb)
+        self.epoch_lineEdit.setObjectName(u"epoch_lineEdit")
+        self.learn_par_gb_layout.addWidget(self.epoch_lineEdit, 0, 1, 1, 1)
+        self.epoch_label = QLabel(self.learn_par_gb)
+        self.epoch_label.setObjectName(u"epoch_label")
+        self.learn_par_gb_layout.addWidget(self.epoch_label, 0, 0, 1, 1)
+        self.train_sample_label = QLabel(self.learn_par_gb)
+        self.train_sample_label.setObjectName(u"train_sample_label")
+        self.learn_par_gb_layout.addWidget(self.train_sample_label, 1, 0, 1, 1)
+        self.train_sample_lineEdit = QLineEdit(self.learn_par_gb)
+        self.train_sample_lineEdit.setObjectName(u"train_sample_lineEdit")
+        self.learn_par_gb_layout.addWidget(self.train_sample_lineEdit, 1, 1, 1, 1)
+        self.horizontalLayout.addLayout(self.learn_par_gb_layout)
         self.learn_par_layout.addWidget(self.learn_par_gb)
+
         self.learn_button = QtWidgets.QPushButton(self.centralwidget)
-
         self.learn_button.clicked.connect(self.learn)
-
         self.learn_button.setObjectName("learn_button")
         self.learn_par_layout.addWidget(self.learn_button)
         self.main_par_layout.addLayout(self.learn_par_layout)
@@ -166,18 +182,14 @@ class Ui_MainWindow(object):
         self.result_layout.setObjectName("result_layout")
         self.log_layout = QtWidgets.QVBoxLayout()
         self.log_layout.setObjectName("log_layout")
-
         self.plot_widget = QWebEngineView()
         self.plot_widget.setHtml("")
-
-
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.log_text_edit)
         self.log_layout.addWidget(self.scroll_area)
-
         self.graph_layout.addWidget(self.plot_widget)
 
         self.start_button = QtWidgets.QPushButton(self.centralwidget)
@@ -224,12 +236,12 @@ class Ui_MainWindow(object):
         self.learn_par_gb.setTitle(_translate("MainWindow", "Параметры обучения"))
         self.learn_button.setText(_translate("MainWindow", "Обучение"))
         self.start_button.setText(_translate("MainWindow", "Запуск"))
+        self.epoch_label.setText(_translate("MainWindow", "Эпохи"))
+        self.train_sample_label.setText(_translate("MainWindow", "Обучающая выборка"))
 
 
 
     def generate_anomaly(self):
-        self.data["anomaly"] = 0
-        #self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
         if (GEN_ANOMALY == True):
             self.data = generate_anomaly_data(self.data, WINDOW_COUNT, WINDOW_SIZE_LIST)
         fig = go.Figure()
@@ -253,7 +265,10 @@ class Ui_MainWindow(object):
         self.plot_widget.setHtml(html)
         self.log_text_edit.append("модель " + mod + " переобучена")
         self.log_text_edit.append("время обучения " + str(fig[1]))
-        self.log_text_edit.append("точность " + str(fig[2]))
+        self.log_text_edit.append("точность по roc " + str(fig[2][1]))
+        self.log_text_edit.append("точность по pr " + str(fig[2][2]))
+        self.log_text_edit.append("точность по f1 " + str(fig[2][3]))
+
 
     def veltest(self):
         if self.model_rb_1.isChecked() == True:
@@ -275,6 +290,9 @@ class Ui_MainWindow(object):
         self.filename_label.setText(_translate("MainWindow", fname[0]))
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
+        ensemble = pd.read_csv(r"outputs/ensemble_out_412.csv", sep=',')
+        self.data["anomaly"] = 0
+        self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=self.data['timestamp'], y=self.data['temp'],
                                  mode='lines',
@@ -283,5 +301,4 @@ class Ui_MainWindow(object):
         html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
-        self.log_text_edit.append("отррыт файл "+ fname[0])
-        return fname
+        self.log_text_edit.append("открыт файл "+ fname[0])

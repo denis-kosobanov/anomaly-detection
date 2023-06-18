@@ -17,8 +17,8 @@ DATA = pd.read_csv(r"C:/Users/dadon/PycharmProjects/pythonProject20/first_half 2
 
 TEST_SIZE = 4100
 WINDOW_SIZE_LIST = [60, 70, 80]
-WINDOW_COUNT = 7
-SLICE_COUNT = 6
+WINDOW_COUNT = 3
+SLICE_COUNT = 5
 TEMP_RANGE = 1
 K_MIN = -3
 K_MAX = 3
