@@ -1,18 +1,22 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QScrollArea, QTextEdit
+
 import pandas as pd
 import plotly
 from rnn import *
 from rnn_graph_output import rnn_out
 from utils.data_preprocessing.generator import *
 import plotly.graph_objects as go
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowModality(QtCore.Qt.NonModal)
         MainWindow.resize(1374, 591)
+
         self.data = None
+
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -25,7 +29,9 @@ class Ui_MainWindow(object):
         self.open_file_layout.setObjectName("open_file_layout")
         self.open_button = QtWidgets.QPushButton(self.centralwidget)
         self.open_button.setObjectName("open_button")
+
         self.open_button.clicked.connect(self.load_file)
+
         self.open_file_layout.addWidget(self.open_button, 1, 0, 1, 1)
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setObjectName("label")
@@ -99,7 +105,9 @@ class Ui_MainWindow(object):
         self.generate_layout.addWidget(self.generate_gb, 1, 0, 1, 2)
         self.main_par_layout.addLayout(self.generate_layout)
         self.generate_button = QtWidgets.QPushButton(self.centralwidget)
+
         self.generate_button.clicked.connect(self.generate_anomaly)
+
         self.generate_button.setObjectName("generate_button")
         self.main_par_layout.addWidget(self.generate_button)
         self.models_layout = QtWidgets.QVBoxLayout()
@@ -144,7 +152,9 @@ class Ui_MainWindow(object):
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.learn_par_layout.addWidget(self.learn_par_gb)
         self.learn_button = QtWidgets.QPushButton(self.centralwidget)
+
         self.learn_button.clicked.connect(self.learn)
+
         self.learn_button.setObjectName("learn_button")
         self.learn_par_layout.addWidget(self.learn_button)
         self.main_par_layout.addLayout(self.learn_par_layout)
@@ -156,19 +166,31 @@ class Ui_MainWindow(object):
         self.result_layout.setObjectName("result_layout")
         self.log_layout = QtWidgets.QVBoxLayout()
         self.log_layout.setObjectName("log_layout")
+
         self.plot_widget = QWebEngineView()
         self.plot_widget.setHtml("")
+
+        plot_widget = QWebEngineView()
+        plot_widget.setHtml("")
+
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.log_text_edit)
         self.log_layout.addWidget(self.scroll_area)
+
         self.graph_layout.addWidget(self.plot_widget)
 
         self.start_button = QtWidgets.QPushButton(self.centralwidget)
         self.start_button.setObjectName("start_button")
         self.start_button.clicked.connect(self.veltest)
+
+        self.graph_layout.addWidget(plot_widget)
+
+        self.start_button = QtWidgets.QPushButton(self.centralwidget)
+        self.start_button.setObjectName("start_button")
+
         self.graph_layout.addWidget(self.start_button)
         self.main_layout.addLayout(self.graph_layout)
         self.main_layout.addLayout(self.log_layout)
@@ -208,6 +230,7 @@ class Ui_MainWindow(object):
         self.learn_par_gb.setTitle(_translate("MainWindow", "Параметры обучения"))
         self.learn_button.setText(_translate("MainWindow", "Обучение"))
         self.start_button.setText(_translate("MainWindow", "Запуск"))
+
 
 
     def generate_anomaly(self):
