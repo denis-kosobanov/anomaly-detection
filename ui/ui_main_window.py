@@ -170,8 +170,6 @@ class Ui_MainWindow(object):
         self.plot_widget = QWebEngineView()
         self.plot_widget.setHtml("")
 
-        plot_widget = QWebEngineView()
-        plot_widget.setHtml("")
 
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
@@ -186,10 +184,6 @@ class Ui_MainWindow(object):
         self.start_button.setObjectName("start_button")
         self.start_button.clicked.connect(self.veltest)
 
-        self.graph_layout.addWidget(plot_widget)
-
-        self.start_button = QtWidgets.QPushButton(self.centralwidget)
-        self.start_button.setObjectName("start_button")
 
         self.graph_layout.addWidget(self.start_button)
         self.main_layout.addLayout(self.graph_layout)
