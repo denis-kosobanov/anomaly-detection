@@ -1,3 +1,5 @@
+from functools import partial
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout, QRadioButton
@@ -9,6 +11,7 @@ from rnn_graph_output import rnn_out
 from utils.data_preprocessing.generator import *
 import plotly.graph_objects as go
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -16,6 +19,8 @@ class Ui_MainWindow(object):
         MainWindow.resize(1374, 591)
 
         self.data = None
+
+        self.exec_model_rb = ["XGBoost", "SARIMA", "CatBoost", "Holt-Winters", "Isolation Forest"]
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -196,7 +201,6 @@ class Ui_MainWindow(object):
         self.start_button.setObjectName("start_button")
         self.start_button.clicked.connect(self.veltest)
 
-
         self.graph_layout.addWidget(self.start_button)
         self.main_layout.addLayout(self.graph_layout)
         self.main_layout.addLayout(self.log_layout)
@@ -204,6 +208,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
+        self.set_toggle_models_rb()
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -239,11 +244,24 @@ class Ui_MainWindow(object):
         self.epoch_label.setText(_translate("MainWindow", "Эпохи"))
         self.train_sample_label.setText(_translate("MainWindow", "Обучающая выборка"))
 
+    def set_toggle_models_rb(self):
+        for i in range(self.model_rb_layout.count()):
+            widget = self.model_rb_layout.itemAt(i).widget()
+            if widget:
+                widget.toggled.connect(partial(self.on_model_rb_toggled, widget.text()))
 
+    def on_model_rb_toggled(self, text):
+        # print(text)
+        if text in self.exec_model_rb:
+            self.epoch_label.setVisible(False)
+            self.epoch_lineEdit.setVisible(False)
+        else:
+            self.epoch_label.setVisible(True)
+            self.epoch_lineEdit.setVisible(True)
 
     def generate_anomaly(self):
         self.data["anomaly"] = 0
-        #self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
+        # self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
         if (GEN_ANOMALY == True):
             self.data = generate_anomaly_data(self.data, WINDOW_COUNT, WINDOW_SIZE_LIST)
         fig = go.Figure()
@@ -297,5 +315,5 @@ class Ui_MainWindow(object):
         html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
-        self.log_text_edit.append("отррыт файл "+ fname[0])
+        self.log_text_edit.append("отррыт файл " + fname[0])
         return fname
