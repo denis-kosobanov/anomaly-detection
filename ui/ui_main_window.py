@@ -285,7 +285,10 @@ class Ui_MainWindow(object):
         self.plot_widget.setHtml(html)
         self.log_text_edit.append("модель " + mod + " переобучена")
         self.log_text_edit.append("время обучения " + str(fig[1]))
-        self.log_text_edit.append("точность " + str(fig[2]))
+        self.log_text_edit.append("точность по roc " + str(fig[2][1]))
+        self.log_text_edit.append("точность по pr " + str(fig[2][2]))
+        self.log_text_edit.append("точность по f1 " + str(fig[2][3]))
+
 
     def veltest(self):
         if self.model_rb_1.isChecked() == True:
@@ -307,6 +310,9 @@ class Ui_MainWindow(object):
         self.filename_label.setText(_translate("MainWindow", fname[0]))
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
+        ensemble = pd.read_csv(r"outputs/ensemble_out_412.csv", sep=',')
+        self.data["anomaly"] = 0
+        self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=self.data['timestamp'], y=self.data['temp'],
                                  mode='lines',
@@ -317,3 +323,5 @@ class Ui_MainWindow(object):
         self.plot_widget.setHtml(html)
         self.log_text_edit.append("отррыт файл " + fname[0])
         return fname
+
+        self.log_text_edit.append("открыт файл "+ fname[0])

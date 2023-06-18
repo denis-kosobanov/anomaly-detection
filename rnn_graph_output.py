@@ -64,7 +64,7 @@ def rnn_out(DATA):
 
     print(diff)
     diff = pd.Series(diff)
-    number_of_outliers = int(0.01*len(diff))
+    number_of_outliers = int(0.05*len(diff))
     threshold = diff.nlargest(number_of_outliers).min()
 
     test = (diff >= threshold).astype(int)
