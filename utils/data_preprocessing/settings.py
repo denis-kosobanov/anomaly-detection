@@ -8,12 +8,12 @@
         K_MAX: максимальное значение для генерации функции шаблона;
 """
 import pandas as pd
+
 GEN_ANOMALY = True
 ENSEMLE = False
 if ENSEMLE == True:
     ensemble = pd.read_csv(r"ensemble.csv", sep=';')
-DATA = pd.read_csv(r"C:/Users/dadon/PycharmProjects/pythonProject20/first_half 210.csv",
-                   sep=';')
+# DATA = pd.read_csv(r"C:/Users/dadon/PycharmProjects/pythonProject20/first_half 210.csv", sep=';')
 
 TEST_SIZE = 4100
 WINDOW_SIZE_LIST = [60, 70, 80]
