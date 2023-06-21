@@ -1,10 +1,17 @@
+import os
 from functools import partial
 
+import plotly
+import plotly.graph_objects as go
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QTextCharFormat
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout
 
+<<<<<<< HEAD
 import plotly
+=======
+>>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
 from rnn import *
 from lstm import *
 from isoforest_svm import *
@@ -14,18 +21,20 @@ from models_outputs.lstm_graph_output import lstm_out
 from models_outputs.isoforest_graph_output import isoforest_out
 from models_outputs.prophet_graph_output import prophet_out
 from utils.data_preprocessing.generator import *
-import plotly.graph_objects as go
+from utils.data_preprocessing.preprocessing import reindex_and_interpolate_temp
+from utils.valedate import get_text_line_edit
+from utils.data_preprocessing.settings import *
 
 
 class Ui_MainWindow(object):
+    def __init__(self):
+        self.data = None
+        self.exec_model_rb = ["XGBoost", "SARIMA", "CatBoost", "Holt-Winters", "Isolation Forest"]
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowModality(QtCore.Qt.NonModal)
         MainWindow.resize(1374, 591)
-
-        self.data = None
-
-        self.exec_model_rb = ["XGBoost", "SARIMA", "CatBoost", "Holt-Winters", "Isolation Forest"]
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -39,9 +48,7 @@ class Ui_MainWindow(object):
         self.open_file_layout.setObjectName("open_file_layout")
         self.open_button = QtWidgets.QPushButton(self.centralwidget)
         self.open_button.setObjectName("open_button")
-
         self.open_button.clicked.connect(self.load_file)
-
         self.open_file_layout.addWidget(self.open_button, 1, 0, 1, 1)
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setObjectName("label")
@@ -56,11 +63,18 @@ class Ui_MainWindow(object):
         self.preproc_label.setAlignment(QtCore.Qt.AlignCenter)
         self.preproc_label.setObjectName("preproc_label")
         self.preproc_layout.addWidget(self.preproc_label)
-        self.count_records_label = QtWidgets.QLabel(self.centralwidget)
-        self.count_records_label.setObjectName("count_records_label")
-        self.preproc_layout.addWidget(self.count_records_label)
+        self.count_records_layout = QHBoxLayout()
+        self.count_records_layout.setObjectName(u"count_records_layout")
+        self.count_records_label = QLabel(self.centralwidget)
+        self.count_records_label.setObjectName(u"count_records_label")
+        self.count_records_layout.addWidget(self.count_records_label)
+        self.count_records = QLabel(self.centralwidget)
+        self.count_records.setObjectName(u"count_records")
+        self.count_records_layout.addWidget(self.count_records)
+        self.preproc_layout.addLayout(self.count_records_layout)
         self.preproc_button = QtWidgets.QPushButton(self.centralwidget)
         self.preproc_button.setObjectName("preproc_button")
+        self.preproc_button.clicked.connect(self.on_preproc_button)
         self.preproc_layout.addWidget(self.preproc_button)
         self.main_par_layout.addLayout(self.preproc_layout)
         self.generate_layout = QtWidgets.QGridLayout()
@@ -68,15 +82,19 @@ class Ui_MainWindow(object):
         self.generate_cb = QtWidgets.QCheckBox(self.centralwidget)
         self.generate_cb.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.generate_cb.setObjectName("generate_cb")
+        self.generate_cb.stateChanged.connect(self.generate_cb_toggle)
         self.generate_layout.addWidget(self.generate_cb, 0, 0, 1, 2)
         self.generate_gb = QtWidgets.QGroupBox(self.centralwidget)
         self.generate_gb.setObjectName("generate_gb")
+        self.generate_gb.setCheckable(False)
+        self.generate_gb.setEnabled(False)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.generate_gb)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.generate_par_layout = QtWidgets.QGridLayout()
         self.generate_par_layout.setObjectName("generate_par_layout")
         self.slice_lineEdit = QtWidgets.QLineEdit(self.generate_gb)
         self.slice_lineEdit.setObjectName("slice_lineEdit")
+        self.slice_lineEdit.setText(str(SLICE_COUNT))
         self.generate_par_layout.addWidget(self.slice_lineEdit, 1, 1, 1, 1)
         self.range_label = QtWidgets.QLabel(self.generate_gb)
         self.range_label.setObjectName("range_label")
@@ -86,9 +104,11 @@ class Ui_MainWindow(object):
         self.generate_par_layout.addWidget(self.windows_label, 0, 0, 1, 1)
         self.windows_lineEdit = QtWidgets.QLineEdit(self.generate_gb)
         self.windows_lineEdit.setObjectName("windows_lineEdit")
+        self.windows_lineEdit.setText(str(WINDOW_COUNT))
         self.generate_par_layout.addWidget(self.windows_lineEdit, 0, 1, 1, 1)
         self.range_lineEdit = QtWidgets.QLineEdit(self.generate_gb)
         self.range_lineEdit.setObjectName("range_lineEdit")
+        self.range_lineEdit.setText(str(TEMP_RANGE))
         self.generate_par_layout.addWidget(self.range_lineEdit, 2, 1, 1, 1)
         self.slice_label = QtWidgets.QLabel(self.generate_gb)
         self.slice_label.setObjectName("slice_label")
@@ -98,12 +118,14 @@ class Ui_MainWindow(object):
         self.generate_par_layout2.setObjectName("generate_par_layout2")
         self.min_lineEdit = QtWidgets.QLineEdit(self.generate_gb)
         self.min_lineEdit.setObjectName("min_lineEdit")
+        self.min_lineEdit.setText(str(K_MIN))
         self.generate_par_layout2.addWidget(self.min_lineEdit, 2, 1, 1, 1)
         self.max_label = QtWidgets.QLabel(self.generate_gb)
         self.max_label.setObjectName("max_label")
         self.generate_par_layout2.addWidget(self.max_label, 1, 0, 1, 1)
         self.max_lineEdit = QtWidgets.QLineEdit(self.generate_gb)
         self.max_lineEdit.setObjectName("max_lineEdit")
+        self.max_lineEdit.setText(str(K_MAX))
         self.generate_par_layout2.addWidget(self.max_lineEdit, 1, 1, 1, 1)
         self.min_label = QtWidgets.QLabel(self.generate_gb)
         self.min_label.setObjectName("min_label")
@@ -115,10 +137,9 @@ class Ui_MainWindow(object):
         self.generate_layout.addWidget(self.generate_gb, 1, 0, 1, 2)
         self.main_par_layout.addLayout(self.generate_layout)
         self.generate_button = QtWidgets.QPushButton(self.centralwidget)
-
         self.generate_button.clicked.connect(self.generate_anomaly)
-
         self.generate_button.setObjectName("generate_button")
+        self.generate_button.setEnabled(False)
         self.main_par_layout.addWidget(self.generate_button)
         self.models_layout = QtWidgets.QVBoxLayout()
         self.models_layout.setObjectName("models_layout")
@@ -249,6 +270,14 @@ class Ui_MainWindow(object):
         self.epoch_label.setText(_translate("MainWindow", "Эпохи"))
         self.train_sample_label.setText(_translate("MainWindow", "Обучающая выборка"))
 
+    def generate_cb_toggle(self, state):
+        if state == 2:
+            self.generate_gb.setEnabled(True)
+            self.generate_button.setEnabled(True)
+        else:
+            self.generate_gb.setEnabled(False)
+            self.generate_button.setEnabled(False)
+
     def set_toggle_models_rb(self):
         for i in range(self.model_rb_layout.count()):
             widget = self.model_rb_layout.itemAt(i).widget()
@@ -256,7 +285,6 @@ class Ui_MainWindow(object):
                 widget.toggled.connect(partial(self.on_model_rb_toggled, widget.text()))
 
     def on_model_rb_toggled(self, text):
-        # print(text)
         if text in self.exec_model_rb:
             self.epoch_label.setVisible(False)
             self.epoch_lineEdit.setVisible(False)
@@ -264,9 +292,40 @@ class Ui_MainWindow(object):
             self.epoch_label.setVisible(True)
             self.epoch_lineEdit.setVisible(True)
 
+    # Обновить строку счеткика записей
+    def update_data_counter(self):
+        self.count_records.setText(str(len(self.data)))
+
+    def on_preproc_button(self):
+        self.data = reindex_and_interpolate_temp(self.data)
+        self.log_text_edit.append(f"Данные предобработаны.\nКол-во строк изменилось на {len(self.data)}")
+        self.update_data_counter()
+
+    def update_generate_settings(self):
+        lines_edit = [self.windows_lineEdit, self.slice_lineEdit, self.range_lineEdit, self.max_lineEdit,
+                      self.min_lineEdit]
+        global WINDOW_COUNT, SLICE_COUNT, TEMP_RANGE, K_MAX, K_MIN
+        for le in lines_edit:
+            if get_text_line_edit(le) is None:
+                return False
+        WINDOW_COUNT = get_text_line_edit(self.windows_lineEdit)
+        SLICE_COUNT = get_text_line_edit(self.slice_lineEdit)
+        TEMP_RANGE = get_text_line_edit(self.range_lineEdit)
+        K_MAX = get_text_line_edit(self.max_lineEdit)
+        K_MIN = get_text_line_edit(self.min_lineEdit)
+        return True
+
     def generate_anomaly(self):
+<<<<<<< HEAD
         if (GEN_ANOMALY == True):
             self.data = generate_anomaly_data(self.data, WINDOW_COUNT, WINDOW_SIZE_LIST)
+=======
+        self.data["anomaly"] = 0
+        # self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
+        if not self.update_generate_settings():
+            return
+        self.data = generate_anomaly_data(self.data)
+>>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=self.data['timestamp'], y=self.data['temp'],
                                  mode='lines',
@@ -274,7 +333,7 @@ class Ui_MainWindow(object):
         html = '<html><body>'
         html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
-        self.log_text_edit.append("сгенерированы синтетические аномалии " + str(self.data["anomaly"].value_counts()))
+        self.log_text_edit.append("Сгенерированы синтетические аномалии " + str(self.data["anomaly"].value_counts()))
         self.plot_widget.setHtml(html)
 
     def learn(self):
@@ -295,6 +354,7 @@ class Ui_MainWindow(object):
         html += plotly.offline.plot(fig[0], output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
+<<<<<<< HEAD
         self.log_text_edit.append("модель " + mod + " переобучена c параметрами:")
         self.log_text_edit.append("Эпох: " + self.epoch_lineEdit.text())
         self.log_text_edit.append("Размер обучающей выборки: " + self.train_sample_lineEdit.text())
@@ -302,6 +362,13 @@ class Ui_MainWindow(object):
         self.log_text_edit.append("точность по roc: " + str(fig[2][1]))
         self.log_text_edit.append("точность по pr: " + str(fig[2][2]))
         self.log_text_edit.append("точность по f1: " + str(fig[2][3]))
+=======
+        self.log_text_edit.append("модель " + mod + " переобучена")
+        self.log_text_edit.append("время обучения " + str(fig[1]))
+        self.log_text_edit.append("точность по roc " + str(fig[2][1]))
+        self.log_text_edit.append("точность по pr " + str(fig[2][2]))
+        self.log_text_edit.append("точность по f1 " + str(fig[2][3]))
+>>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
 
     def veltest(self):
         if self.model_rb_1.isChecked() == True:
@@ -329,7 +396,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         fname = QtWidgets.QFileDialog.getOpenFileName()
         self.data = pd.read_csv(fname[0], sep=';')
-        self.filename_label.setText(_translate("MainWindow", fname[0]))
+        self.update_data_counter()
+        self.filename_label.setText(_translate("MainWindow", os.path.basename(fname[0])))
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
         self.count_records_label.setText(_translate("MainWindow", "Количество записей: " + str(len(self.data))))
@@ -357,6 +425,14 @@ class Ui_MainWindow(object):
         fig.add_trace(go.Scatter(x=self.data['timestamp'], y=self.data['temp'],
                                  mode='lines',
                                  name='Временной ряд'))
+<<<<<<< HEAD
         self.plot_widget.setHtml(fig.to_html(include_plotlyjs='cdn'))
         self.log_text_edit.append("открыт файл " + fname[0])
+=======
+        html = '<html><body>'
+        html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
+        html += '</body></html>'
+        self.plot_widget.setHtml(html)
+        self.log_text_edit.append("Открыт файл " + fname[0])
+>>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
         return fname

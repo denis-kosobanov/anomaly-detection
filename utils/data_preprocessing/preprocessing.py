@@ -33,8 +33,6 @@ def reindex_and_interpolate_temp(df: pd.DataFrame) -> pd.DataFrame:
     # Разница между соседними записями
     df['diff'] = df['datetime'].diff().dt.total_seconds() / 60
 
-    df['new'] = 0.0
-
     # Удаление записей с разницей меньше 10 минут
     df = df[df['diff'] >= 10].reset_index(drop=True)
 
@@ -49,11 +47,10 @@ def reindex_and_interpolate_temp(df: pd.DataFrame) -> pd.DataFrame:
             new_row = row1.copy()
             new_row['datetime'] += pd.to_timedelta(10 * (j + 1), unit='m')
             new_row['temp'] = None
-            new_row['new'] = 1.0
             new_rows.append(new_row)
 
     # Добавление промежуточных записей в исходный DataFrame
-    df = df.append(new_rows, ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
+    df = df._append(new_rows, ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
 
     # Приведение столбца 'temp' к типу float
     df['temp'] = df['temp'].astype(float)
@@ -69,6 +66,6 @@ def reindex_and_interpolate_temp(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(columns=['diff', 'datetime'])
 
     # Столбцы в нужном порядке
-    df = df[['date', 'time', 'temp', 'anomaly', 'new']]
+    df = df[['date', 'time', 'temp', 'anomaly']]
 
     return df

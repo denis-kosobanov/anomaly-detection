@@ -8,10 +8,10 @@ import pandas as pd
 from utils.data_preprocessing.settings import *
 
 
-def generate_anomaly_data(data: pd.DataFrame, window_count: int, window_size_list: list) -> pd.DataFrame:
-    for _ in range(window_count):
+def generate_anomaly_data(data: pd.DataFrame) -> pd.DataFrame:
+    for _ in range(WINDOW_COUNT):
         # Рандомный выбор размера окна
-        random_window_size = random.choice(window_size_list)
+        random_window_size = random.choice(WINDOW_SIZE_LIST)
 
         # Выбор окна в данных
         window = pd.DataFrame(_random_select_window(data, random_window_size))
@@ -70,38 +70,6 @@ def generate_anomaly_window(data: list, slice_count=1, k_min=-3, k_max=3, temp_r
     # plt.show()
 
     return concatenated_data
-
-
-def modify_data_chunks(data, chunk_size, alphas, noise_scales, mode='multiply'):
-    num_chunks = len(data) // chunk_size
-    new_data_chunks = []
-
-    for i in range(num_chunks):
-        chunk = data[i * chunk_size: (i + 1) * chunk_size]
-
-        # Apply modification and add random noise based on chosen mode
-        if mode == 'multiply':
-            modified_chunk = alphas[i] * chunk + noise_scales[i] * np.random.randn(chunk_size)
-        elif mode == 'divide':
-            modified_chunk = chunk / alphas[i] + noise_scales[i] * np.random.randn(chunk_size)
-        else:
-            raise ValueError("Invalid mode. Choose 'multiply' or 'divide'.")
-
-        new_data_chunks.append(modified_chunk)
-
-    # Include the remaining data if it is not a multiple of chunk_size
-    if len(data) % chunk_size != 0:
-        remaining_chunk = data[num_chunks * chunk_size:]
-        if mode == 'multiply':
-            modified_remaining_chunk = alphas[-1] * remaining_chunk + noise_scales[-1] * np.random.randn(
-                len(remaining_chunk))
-        elif mode == 'divide':
-            modified_remaining_chunk = remaining_chunk / alphas[-1] + noise_scales[-1] * np.random.randn(
-                len(remaining_chunk))
-        new_data_chunks.append(modified_remaining_chunk)
-
-    new_data = np.concatenate(new_data_chunks)
-    return new_data
 
 
 def _random_select_window(data: pd.DataFrame, window_size=70) -> pd.DataFrame:
