@@ -8,10 +8,9 @@ from PyQt5.QtGui import QTextCharFormat
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout
 
-<<<<<<< HEAD
+
 import plotly
-=======
->>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
+
 from rnn import *
 from lstm import *
 from isoforest_svm import *
@@ -316,16 +315,15 @@ class Ui_MainWindow(object):
         return True
 
     def generate_anomaly(self):
-<<<<<<< HEAD
+
         if (GEN_ANOMALY == True):
             self.data = generate_anomaly_data(self.data, WINDOW_COUNT, WINDOW_SIZE_LIST)
-=======
+
         self.data["anomaly"] = 0
         # self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
         if not self.update_generate_settings():
             return
         self.data = generate_anomaly_data(self.data)
->>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=self.data['timestamp'], y=self.data['temp'],
                                  mode='lines',
@@ -354,7 +352,7 @@ class Ui_MainWindow(object):
         html += plotly.offline.plot(fig[0], output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
-<<<<<<< HEAD
+
         self.log_text_edit.append("модель " + mod + " переобучена c параметрами:")
         self.log_text_edit.append("Эпох: " + self.epoch_lineEdit.text())
         self.log_text_edit.append("Размер обучающей выборки: " + self.train_sample_lineEdit.text())
@@ -362,13 +360,7 @@ class Ui_MainWindow(object):
         self.log_text_edit.append("точность по roc: " + str(fig[2][1]))
         self.log_text_edit.append("точность по pr: " + str(fig[2][2]))
         self.log_text_edit.append("точность по f1: " + str(fig[2][3]))
-=======
-        self.log_text_edit.append("модель " + mod + " переобучена")
-        self.log_text_edit.append("время обучения " + str(fig[1]))
-        self.log_text_edit.append("точность по roc " + str(fig[2][1]))
-        self.log_text_edit.append("точность по pr " + str(fig[2][2]))
-        self.log_text_edit.append("точность по f1 " + str(fig[2][3]))
->>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
+
 
     def veltest(self):
         if self.model_rb_1.isChecked() == True:
@@ -400,7 +392,6 @@ class Ui_MainWindow(object):
         self.filename_label.setText(_translate("MainWindow", os.path.basename(fname[0])))
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
-        self.count_records_label.setText(_translate("MainWindow", "Количество записей: " + str(len(self.data))))
         if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "412_1"):
             print(fname[0].split('/')[len(fname[0].split('/')) - 1])
             ensemble = pd.read_csv(r"outputs/ensemble_out_412.csv", sep=',')
@@ -425,14 +416,13 @@ class Ui_MainWindow(object):
         fig.add_trace(go.Scatter(x=self.data['timestamp'], y=self.data['temp'],
                                  mode='lines',
                                  name='Временной ряд'))
-<<<<<<< HEAD
+
         self.plot_widget.setHtml(fig.to_html(include_plotlyjs='cdn'))
         self.log_text_edit.append("открыт файл " + fname[0])
-=======
+
         html = '<html><body>'
         html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
-        self.log_text_edit.append("Открыт файл " + fname[0])
->>>>>>> 8add3b59440efcc21396f9c0360abb2d392d8471
+
         return fname

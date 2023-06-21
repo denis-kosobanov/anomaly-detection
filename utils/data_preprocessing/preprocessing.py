@@ -14,7 +14,7 @@ def selected_data(path: str, start_date: str, end_date: str) -> pd.DataFrame:
     df = pd.DataFrame(data, columns=["date", "time", "temp"])
 
     # Добавляем колонку 'anomaly' и заполняем нулями
-    df['anomaly'] = float(0.0)
+    #df['anomaly'] = float(0.0)
 
     # Преобразование колонки 'date' в формат datetime
     df['date'] = pd.to_datetime(df['date'])
@@ -61,6 +61,8 @@ def reindex_and_interpolate_temp(df: pd.DataFrame) -> pd.DataFrame:
     # Разделение столбца 'datetime
     df['date'] = df['datetime'].dt.date
     df['time'] = df['datetime'].dt.time
+
+    df['date'] = df['date'].astype(str)
 
     # Удаление столбца 'diff' и 'datetime'
     df = df.drop(columns=['diff', 'datetime'])

@@ -47,7 +47,6 @@ def prophet_learn(DATA, train_size):
                         mode='markers',
                         name='Аномалия'))
     fig.update_layout(showlegend=True)
-    fig.show()
     acc_output = []
     from sklearn.metrics import roc_auc_score
     from sklearn.metrics import recall_score

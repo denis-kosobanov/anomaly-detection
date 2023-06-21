@@ -53,7 +53,7 @@ def rnn_out(DATA):
     print("y_test", y_test.shape)
 
     # model.save('16_model')
-    loaded_model = keras.models.load_model('../models/rnn_model')
+    loaded_model = keras.models.load_model('models/rnn_model')
     #loaded_model = model
     diff=[]
     ratio=[]
