@@ -17,7 +17,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 
-def rnn_learn(DATA):
+def rnn_learn(DATA, epoch, train_size):
     df = DATA
     # print(df["anomaly"].value_counts())
     # if (GEN_ANOMALY == True):
@@ -53,8 +53,8 @@ def rnn_learn(DATA):
     testdatacut = testdatasize + unroll_length  + 1
     print(data_n)
     #train data
-    x_train = data_n[0:-prediction_time - testdatacut].values
-    y_train = data_n[prediction_time:-testdatacut][0].values
+    x_train = data_n[0:train_size].values
+    y_train = data_n[prediction_time:train_size][0].values
 
     # test data
     x_test = data_n[0 - testdatacut:-prediction_time].values
@@ -99,18 +99,16 @@ def rnn_learn(DATA):
         units=1))
     model.add(Activation('linear'))
 
-    start = time.time()
     model.compile(loss='mse', optimizer='rmsprop')
-    z = (time.time() - start)
 
-
+    start = time.time()
     model.fit(
         x_train,
         y_train,
         batch_size=3028,
-        epochs=30, #30
+        epochs=epoch, #30
         validation_split=0.1)
-
+    z = (time.time() - start)
     model.save('models/rnn_model')
     loaded_model = model
     diff=[]

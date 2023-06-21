@@ -2,12 +2,17 @@ from functools import partial
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout, QRadioButton
+from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout
 
-import pandas as pd
 import plotly
 from rnn import *
-from rnn_graph_output import rnn_out
+from lstm import *
+from isoforest_svm import *
+from prophet_model import *
+from models_outputs.rnn_graph_output import rnn_out
+from models_outputs.lstm_graph_output import lstm_out
+from models_outputs.isoforest_graph_output import isoforest_out
+from models_outputs.prophet_graph_output import prophet_out
 from utils.data_preprocessing.generator import *
 import plotly.graph_objects as go
 
@@ -260,8 +265,6 @@ class Ui_MainWindow(object):
             self.epoch_lineEdit.setVisible(True)
 
     def generate_anomaly(self):
-        self.data["anomaly"] = 0
-        # self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
         if (GEN_ANOMALY == True):
             self.data = generate_anomaly_data(self.data, WINDOW_COUNT, WINDOW_SIZE_LIST)
         fig = go.Figure()
@@ -278,30 +281,49 @@ class Ui_MainWindow(object):
         mod = ""
         if self.model_rb_1.isChecked() == True:
             mod = "RNN"
-            fig = rnn_learn(self.data)
+            fig = rnn_learn(self.data, int(self.epoch_lineEdit.text()), int(self.train_sample_lineEdit.text()))
+        if self.model_rb_2.isChecked() == True:
+            mod = "LSTM"
+            fig = lstm_learn(self.data, int(self.epoch_lineEdit.text()), int(self.train_sample_lineEdit.text()))
+        if self.model_rb_8.isChecked() == True:
+            mod = "IsolationForest"
+            fig = isoforest_learn(self.data, int(self.train_sample_lineEdit.text()))
+        elif self.model_rb_4.isChecked() == True:
+            mod = "SARIMA"
+            fig = prophet_learn(self.data, int(self.train_sample_lineEdit.text()))
         html = '<html><body>'
         html += plotly.offline.plot(fig[0], output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
-        self.log_text_edit.append("модель " + mod + " переобучена")
-        self.log_text_edit.append("время обучения " + str(fig[1]))
-        self.log_text_edit.append("точность по roc " + str(fig[2][1]))
-        self.log_text_edit.append("точность по pr " + str(fig[2][2]))
-        self.log_text_edit.append("точность по f1 " + str(fig[2][3]))
-
+        self.log_text_edit.append("модель " + mod + " переобучена c параметрами:")
+        self.log_text_edit.append("Эпох: " + self.epoch_lineEdit.text())
+        self.log_text_edit.append("Размер обучающей выборки: " + self.train_sample_lineEdit.text())
+        self.log_text_edit.append("время обучения: " + str(fig[1]))
+        self.log_text_edit.append("точность по roc: " + str(fig[2][1]))
+        self.log_text_edit.append("точность по pr: " + str(fig[2][2]))
+        self.log_text_edit.append("точность по f1: " + str(fig[2][3]))
 
     def veltest(self):
         if self.model_rb_1.isChecked() == True:
             fig = rnn_out(self.data)
-        # elif self.model_rb_6.isChecked() == True:
-        #     fig = catboost_out(self.data)
-        # elif self.model_rb_7.isChecked() == True:
-        #     fig = isoforest_out(self.data)
+        elif self.model_rb_2.isChecked() == True:
+            fig = lstm_out(self.data)
+        elif self.model_rb_8.isChecked() == True:
+            fig = isoforest_out(self.data)
+        elif self.model_rb_4.isChecked() == True:
+            fig = prophet_out(self.data)
         # we create html code of the figure
         html = '<html><body>'
-        html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
+        html += plotly.offline.plot(fig[0], output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
+        self.log_text_edit.append("Запуск модели")
+        self.log_text_edit.append("Время работы: " + fig[6])
+        self.log_text_edit.append("Средняя ошибка предсказания: " + fig[1])
+        self.log_text_edit.append("Максимальная температура: " + fig[2])
+        self.log_text_edit.append("Минимальная температура: " + fig[3])
+        self.log_text_edit.append("Средняя температура: " + fig[4])
+        self.log_text_edit.append("Процент аномалий в ряде: " + fig[5] + "%")
 
     def load_file(self):
         _translate = QtCore.QCoreApplication.translate
@@ -310,6 +332,24 @@ class Ui_MainWindow(object):
         self.filename_label.setText(_translate("MainWindow", fname[0]))
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
+        self.count_records_label.setText(_translate("MainWindow", "Количество записей: " + str(len(self.data))))
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "412_1"):
+            print(fname[0].split('/')[len(fname[0].split('/')) - 1])
+            ensemble = pd.read_csv(r"outputs/ensemble_out_412.csv", sep=',')
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "412_2"):
+            ensemble = pd.read_csv(r"outputs/ensemble_out_412_second.csv", sep=',')
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "210"):
+            ensemble = pd.read_csv(r"outputs/ensemble_out_210.csv", sep=',')
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "210_2"):
+            ensemble = pd.read_csv(r"outputs/ensemble_out_210_second.csv", sep=',')
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "420"):
+            ensemble = pd.read_csv(r"outputs/ensemble_out_420.csv", sep=',')
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "420_2"):
+            ensemble = pd.read_csv(r"outputs/ensemble_out_420_second.csv", sep=',')
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "316"):
+            ensemble = pd.read_csv(r"outputs/ensemble_out_316.csv", sep=',')
+        if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "316_2"):
+            ensemble = pd.read_csv(r"outputs/ensemble_out_316_second.csv", sep=',')
         ensemble = pd.read_csv(r"outputs/ensemble_out_412.csv", sep=',')
         self.data["anomaly"] = 0
         self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
@@ -317,11 +357,6 @@ class Ui_MainWindow(object):
         fig.add_trace(go.Scatter(x=self.data['timestamp'], y=self.data['temp'],
                                  mode='lines',
                                  name='Временной ряд'))
-        html = '<html><body>'
-        html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
-        html += '</body></html>'
-        self.plot_widget.setHtml(html)
-        self.log_text_edit.append("отррыт файл " + fname[0])
+        self.plot_widget.setHtml(fig.to_html(include_plotlyjs='cdn'))
+        self.log_text_edit.append("открыт файл " + fname[0])
         return fname
-
-        self.log_text_edit.append("открыт файл "+ fname[0])
