@@ -1,14 +1,3 @@
-"""
-Anomaly Detection using Brutlag algorithm
------------------------------------------
-This file contains the implementation brutlag algorithm and it can be used to detect anomalies
-in time series data.
-Dataset
--------
-The dataset contains India's monthly average temperature (°C) recorded for a period of 2000-2018.
-"""
-
-
 from sklearn import preprocessing
 from utils.data_preprocessing.generator import *
 import plotly.graph_objects as go
@@ -19,21 +8,22 @@ from sklearn.metrics import accuracy_score
 
 def rnn_learn(DATA, epoch, train_size):
     df = DATA
-    # print(df["anomaly"].value_counts())
-    # if (GEN_ANOMALY == True):
-    #     df = generate_anomaly_data(df, WINDOW_COUNT, WINDOW_SIZE_LIST)
-    # print(df["anomaly"].value_counts())
+
     df["timestamp"] = df["date"] + " " + df["time"]
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df.drop(columns = ['date', 'time'], axis = 1)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df.plot(x='timestamp', y='temp')
 
+    """
+        извлекаем пареметры для обучения
+    """
+
     df['hours'] = df['timestamp'].dt.hour
     df['daylight'] = ((df['hours'] >= 7) & (df['hours'] <= 22)).astype(int)
     df['DayOfTheWeek'] = df['timestamp'].dt.dayofweek
     df['WeekDay'] = (df['DayOfTheWeek'] < 5).astype(int)
-    outliers_fraction = 0.01
+
     df['time_epoch'] = (df['timestamp'].astype(np.int64)/100000000000).astype(np.int64)
     df['categories'] = df['WeekDay']*2 + df['daylight']
 
@@ -43,20 +33,18 @@ def rnn_learn(DATA, epoch, train_size):
     np_scaled = min_max_scaler.fit_transform(data_n)
     data_n = pd.DataFrame(np_scaled)
 
-
-
-
-    # important parameters and train/test size
     prediction_time = 1
     testdatasize = 4050
     unroll_length = 50
     testdatacut = testdatasize + unroll_length  + 1
-    print(data_n)
-    #train data
+
+
     x_train = data_n[0:train_size].values
     y_train = data_n[prediction_time:train_size][0].values
 
-    # test data
+    """
+        тестовая выборка
+    """
     x_test = data_n[0 - testdatacut:-prediction_time].values
     y_test = data_n[prediction_time - testdatacut:][0].values
 
@@ -72,19 +60,15 @@ def rnn_learn(DATA, epoch, train_size):
     x_test = unroll(x_test, unroll_length)
     y_train = y_train[-x_train.shape[0]:]
     y_test = y_test[-x_test.shape[0]:]
-    print(x_train)
-    # see the shape
-    print("x_train", x_train.shape)
-    print("y_train", y_train.shape)
-    print("x_test", x_test.shape)
-    print("y_test", y_test.shape)
+
+
     import tensorflow as tf
     from keras.layers import Dense, Activation, Dropout
     from keras.layers import LSTM
     from keras.models import Sequential
-    import time #helper libraries
-    from keras.models import model_from_json
-    import sys
+    import time
+
+
 
 
     model = Sequential()
@@ -121,17 +105,15 @@ def rnn_learn(DATA, epoch, train_size):
         diff.append(abs(y_test[u] - pr))
 
 
-    print(diff)
     diff = pd.Series(diff)
     number_of_outliers = int(0.05*len(diff))
     threshold = diff.nlargest(number_of_outliers).min()
 
     test = (diff >= threshold).astype(int)
-    print(test)
+
     complement = pd.Series(0, index=np.arange(len(data_n)-testdatasize))
     df['anomaly_rnn'] = complement._append(test, ignore_index='True')
-    # df['anomaly_rnn'] = test
-    print(df['anomaly_rnn'].value_counts())
+
 
     a = df.loc[df['anomaly_rnn'] == 1, ['time_epoch', 'temp']]
 
@@ -158,8 +140,3 @@ def rnn_learn(DATA, epoch, train_size):
 
     return [fig, z, acc_output]
 
-
-
-# print(roc_auc_score(df_out[prediction_time-testdatacut:  ]['target'], df[prediction_time-testdatacut:  ]['anomaly_rnn']))
-# print(recall_score(df_out[prediction_time-testdatacut:  ]['target'], df[prediction_time-testdatacut:  ]['anomaly_rnn']))
-# print(f1_score(df_out[prediction_time-testdatacut:  ]['target'], df[prediction_time-testdatacut:  ]['anomaly_rnn']))

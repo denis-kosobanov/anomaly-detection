@@ -61,7 +61,7 @@ def reindex_and_interpolate_temp(df: pd.DataFrame) -> pd.DataFrame:
     # Разделение столбца 'datetime
     df['date'] = df['datetime'].dt.date
     df['time'] = df['datetime'].dt.time
-
+    df['time'] = df['time'].astype(str)
     df['date'] = df['date'].astype(str)
 
     # Удаление столбца 'diff' и 'datetime'

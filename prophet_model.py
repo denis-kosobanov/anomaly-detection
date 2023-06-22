@@ -1,8 +1,6 @@
-#https://www.kaggle.com/code/sadeghjalalian/time-series-forecasting-using-arima-prophet
-
 from prophet import Prophet
 import plotly.graph_objects as go
-import pandas as pd
+
 from utils.data_preprocessing.generator import *
 import pickle
 import time
@@ -17,8 +15,6 @@ def prophet_learn(DATA, train_size):
     df = df.rename(columns={'timestamp': 'ds',
                             'temp': 'y'})
 
-    train_size = train_size
-    test_size = len(df) - train_size
     train, test = df.iloc[0:train_size], df.iloc[train_size:len(df)]
     print(train.shape, test.shape)
 

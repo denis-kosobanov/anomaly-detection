@@ -15,21 +15,27 @@ def prophet_out(DATA):
     df = df.rename(columns={'timestamp': 'ds',
                             'temp': 'y'})
 
-
+    """
+        создаем выборку
+    """
     test = df.iloc[0:len(df)]
-
+    """
+        загружаем предобученную модель
+    """
     my_model = pickle.load(open('models/prophet_model.sav', 'rb'))
 
-    with open('models/prophet_model.sav', 'wb') as f:
-        pickle.dump(my_model, f)
     start = time.time()
     forecast = my_model.predict(test)
     z = (time.time() - start)
-    print(forecast)
-    print(test)
+
+    """
+        создаем график
+    """
+
     test["anomaly_prophet"] = forecast['yhat'].values - test["y"].values
     mean = test["anomaly_prophet"].mean()
-    print(test["anomaly_prophet"].value_counts())
+
+
     test.loc[abs(test["anomaly_prophet"]) >= 0.95, "anomaly_prophet"] = 1
     test.loc[abs(test["anomaly_prophet"]) <= 0.95, "anomaly_prophet"] = 0
 

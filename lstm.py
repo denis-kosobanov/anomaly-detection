@@ -2,12 +2,11 @@ import numpy as np
 import tensorflow as tf
 import seaborn as sns
 from matplotlib.pylab import rcParams
-import matplotlib.pyplot as plt
-import plotly.express as px
+
 import plotly.graph_objects as go
-import openpyxl
+
 import time
-from tensorflow import keras
+
 sns.set(style='whitegrid', palette='muted')
 rcParams['figure.figsize'] = 14, 8
 np.random.seed(1)
@@ -118,7 +117,6 @@ def lstm_learn(DATA, epoch, train_size):
                         mode='lines',
                         name='Threshold'))
     fig.update_layout(showlegend=True)
-    #fig.show()
 
     anomalies = test_score_df[test_score_df.anomaly_lstm == True]
 
@@ -132,15 +130,10 @@ def lstm_learn(DATA, epoch, train_size):
                         mode='markers',
                         name='Аномалия'))
     fig.update_layout(showlegend=True)
-    #fig.show()
 
-    #header = ['anomaly_lstm']
-    #test_score_df.to_csv('outputs/output_lstm.csv', columns = header)
 
     acc_output = []
-    from sklearn.metrics import roc_auc_score
-    from sklearn.metrics import recall_score
-    from sklearn.metrics import f1_score
+
     print(df['anomaly'].value_counts(()))
 
     from sklearn.metrics import roc_auc_score
