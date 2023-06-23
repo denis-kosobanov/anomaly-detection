@@ -13,11 +13,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 def get_reconstruction_segment(model, values, start, end):
     """
-    Автокодировщик model получает на вход сигнал values и
-    возвращает реконструированные (декодированные) значения
-    для заданного сегмента [start, end].
-    Поскольку автокодировщик требует постоянное число сэмплов на входе, то для
-    последнего набора данных берется сегмент [end-WINWOW_SIZE, end].
+        получение выходных сигналов
     """
     num = int((end - start) / WINDOW_SIZE)
     data = []
@@ -25,13 +21,13 @@ def get_reconstruction_segment(model, values, start, end):
 
     for i in range(num):
         result = model.predict(np.array(values[left:right]).reshape(1, -1))
-        data = np.r_[data, result[0]]
+        data = np.right[data, result[0]]
         left += WINDOW_SIZE
         right += WINDOW_SIZE
 
     if left < end:
         result = model.predict(np.array(values[end - WINDOW_SIZE:end]).reshape(1, -1)).reshape(-1, 1)
-        data = np.r_[data, result[-end + left:].squeeze()]
+        data = np.right[data, result[-end + left:].squeeze()]
 
     return np.array(data)
 
@@ -39,7 +35,7 @@ def get_reconstruction_segment(model, values, start, end):
 
 def check_anomaly_pointwise_abs(ys, ys_hat, threeshold):
     """
-    Поточечное сравнение, модуль расстояния
+        Поточечное сравнение, модуль расстояния
     """
     result = []
     for y1, y2 in zip(ys, ys_hat):
@@ -137,16 +133,16 @@ def train_model(X_train, epochs=1, batch_size=128):
 
             # обучение дискриминатора Cx
             Cx.trainable = True
-            idxs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
+            IDs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
             fake = G.predict(np.random.normal(0, 1, size=(batch_size, LATENT_VECTOR_SIZE)))
             X = []
-            for i in idxs:
+            for i in IDs:
                 X.append(X_train[i:i + WINDOW_SIZE])
-            X = np.r_[X, fake]
-            labels = np.r_[np.ones(shape=batch_size) * 0.95, np.zeros(shape=batch_size)]
+            X = np.right[X, fake]
+            labels = np.right[np.ones(shape=batch_size) * 0.95, np.zeros(shape=batch_size)]
             cx_loss = Cx.train_on_batch(X, labels)
 
-            # обучение генератора cx_gan_model обманывать дискриминатор Cx
+            # обучение генератора cx_gan_model
             Cx.trainable = False
             labels = np.ones(shape=batch_size)
             X = np.random.normal(0, 1, size=(batch_size, LATENT_VECTOR_SIZE))
@@ -154,28 +150,28 @@ def train_model(X_train, epochs=1, batch_size=128):
 
             # обучение дискриминатора Cz
             Cz.trainable = True
-            idxs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
-            fake = np.array([X_train[i:i + WINDOW_SIZE] for i in idxs])
+            IDs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
+            fake = np.array([X_train[i:i + WINDOW_SIZE] for i in IDs])
             fake = E.predict(fake)
             X = np.random.normal(0, 1, size=(batch_size, LATENT_VECTOR_SIZE))
-            X = np.r_[X, fake]
-            labels = np.r_[np.ones(shape=batch_size) * 0.95, np.zeros(shape=batch_size)]
+            X = np.right[X, fake]
+            labels = np.right[np.ones(shape=batch_size) * 0.95, np.zeros(shape=batch_size)]
             cz_loss = Cz.train_on_batch(X, labels)
 
-            # обучение генератора cx_gan_model обманывать дискриминатор Cz
+            # обучение генератора cx_gan_model
             Cz.trainable = False
-            idxs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
+            IDs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
             X = []
-            for i in idxs:
+            for i in IDs:
                 X.append(X_train[i:i + WINDOW_SIZE])
             X = np.array(X)
             labels = np.ones(shape=batch_size)
             cz_g_loss = cz_gan_model.train_on_batch(X, labels)
 
             # обучение автокодировщика AE
-            idxs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
+            IDs = np.random.choice(len(X_train) - WINDOW_SIZE, size=batch_size, replace=False)
             X = []
-            for i in idxs:
+            for i in IDs:
                 X.append(X_train[i:i + WINDOW_SIZE])
             E.trainable = True
             G.trainable = True
@@ -196,7 +192,6 @@ def train_model(X_train, epochs=1, batch_size=128):
                                                                                           cz_loss,
                                                                                           cx_g_loss,
                                                                                           cz_g_loss))
-            ae_model.save_weights("./ae_model-weights-epoch-{}.h5".format(epoch))
 
 
 aeLoss = []
@@ -230,39 +225,39 @@ def TadGan_learn(DATA, epochs, train_size):
     z = (time.time() - start)
     ae_model.save('models/tadgan_model')
 
-    predictions_ = get_reconstruction_segment(ae_model, ys_test, 0, len(ys_test))
-    labels_ = check_anomaly_pointwise_abs(ys_test, predictions_, 0.4)
-    l_, r_ = 0, len(ys_test)
+    preds = get_reconstruction_segment(ae_model, ys_test, 0, len(ys_test))
+    labs = check_anomaly_pointwise_abs(ys_test, preds, 0.4)
+    left, right = 0, len(ys_test)
 
     plt.figure(figsize=(20,10))
-    plt.plot(xs_test[l_:r_], ys_test[l_:r_], label='значения ряда')
-    plt.plot(xs_test[l_:r_], predictions_[l_:r_], c='g', label="предсказанные значения")
-    plt.scatter(xs_test[l_:r_], an_test[l_:r_]-5, c='r', label="размеченные аномалии")
-    plt.scatter(xs_test[l_:r_], np.array(labels_[l_:r_])-3, c='b', label="найденные аномалии")
+    plt.plot(xs_test[left:right], ys_test[left:right], label='значения ряда')
+    plt.plot(xs_test[left:right], preds[left:right], c='g', label="предсказанные значения")
+    plt.scatter(xs_test[left:right], an_test[left:right]-5, c='r', label="размеченные аномалии")
+    plt.scatter(xs_test[left:right], np.array(labs[left:right])-3, c='b', label="найденные аномалии")
 
-    dict = {'time': xs_test[l_:r_], 'temp': ys_test[l_:r_], 'anomaly': np.array(labels_[l_:r_])}
+    dict = {'time': xs_test[left:right], 'temp': ys_test[left:right], 'anomaly': np.array(labs[left:right])}
     anomalies = pd.DataFrame(dict)
     anomaly = anomalies.loc[anomalies['anomaly'] == 1, ['time', 'temp']]
 
     print(anomaly)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=xs_test[l_:r_], y=ys_test[l_:r_],
+    fig.add_trace(go.Scatter(x=xs_test[left:right], y=ys_test[left:right],
                              mode='lines',
                              name='Исходный временной ряд'))
     fig.add_trace(go.Scatter(x=anomaly.time, y=anomaly.temp,
                              mode='markers',
                              name='Аномалия'))
     fig.update_layout(showlegend=True)
-    print(an_test[:len(labels_)])
-    print(labels_)
+    print(an_test[:len(labs)])
+    print(labs)
     from sklearn.metrics import roc_auc_score
     from sklearn.metrics import recall_score
     from sklearn.metrics import f1_score
     from sklearn.metrics import accuracy_score
     acc_output = []
     if GEN_ANOMALY == True:
-        acc_output.append(accuracy_score(an_test, labels_))
-        acc_output.append(roc_auc_score(an_test, labels_))
-        acc_output.append(recall_score(an_test, labels_))
-        acc_output.append(f1_score(an_test, labels_))
+        acc_output.append(accuracy_score(an_test, labs))
+        acc_output.append(roc_auc_score(an_test, labs))
+        acc_output.append(recall_score(an_test, labs))
+        acc_output.append(f1_score(an_test, labs))
     return [fig, z, acc_output]
