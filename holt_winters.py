@@ -158,7 +158,7 @@ def holt_winters_learn(DATA, train_size):
     alpha_final, beta_final, gamma_final= [0.0020669123607705564, 2.9321831921447217e-05, 0.18868791512613298]
     # Передаем оптимальные значения модели,
     start = time.time()
-    model = HoltWinters(DATA[:-128], slen = 24*7, alpha = alpha_final, beta =
+    model = HoltWinters(data[:-128], slen = 24*7, alpha = alpha_final, beta =
     beta_final, gamma = gamma_final, n_preds = 128, scaling_factor =0.56)
     model.triple_exponential_smoothing()
     z = (time.time() - start)

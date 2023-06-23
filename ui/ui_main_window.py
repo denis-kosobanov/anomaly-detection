@@ -416,21 +416,16 @@ class Ui_MainWindow(object):
         html += '</body></html>'
         self.plot_widget.setHtml(html)
         self.log_text_edit.append("Запуск модели")
-        self.log_text_edit.append("Время работы: " + fig[6])
         if mod != "tadgan" or mod != "holt_winters":
             self.log_text_edit.append("Средняя ошибка предсказания: " + fig[1])
 
         if mod != "holt_winters":
+            self.log_text_edit.append("Время работы: " + fig[6])
             self.log_text_edit.append("Максимальная температура: " + fig[2])
             self.log_text_edit.append("Минимальная температура: " + fig[3])
             self.log_text_edit.append("Средняя температура: " + fig[4])
             self.log_text_edit.append("Процент аномалий в ряде: " + fig[5] + "%")
 
-        self.log_text_edit.append("Максимальная температура: " + fig[2])
-        self.log_text_edit.append("Минимальная температура: " + fig[3])
-        self.log_text_edit.append("Средняя температура: " + fig[4])
-        self.log_text_edit.append("Процент аномалий в ряде: " + fig[5] + "%")
-        self.log_text_edit.append('---' * 15)
 
 
     def load_file(self):
