@@ -1,32 +1,32 @@
-import numpy as np
-import tensorflow as tf
-import seaborn as sns
-from matplotlib.pylab import rcParams
-
-import plotly.graph_objects as go
-
 import time
+
+import numpy as np
+import plotly.graph_objects as go
+import seaborn as sns
+import tensorflow as tf
+from matplotlib.pylab import rcParams
 
 sns.set(style='whitegrid', palette='muted')
 rcParams['figure.figsize'] = 14, 8
 np.random.seed(1)
 tf.random.set_seed(1)
 from utils.data_preprocessing.generator import *
+
 pd.options.mode.chained_assignment = None
 
-def lstm_learn(DATA, epoch, train_size):
 
+def lstm_learn(DATA, epoch, train_size):
     df = DATA
 
     df["timestamp"] = df["date"] + " " + df["time"]
 
     df['timestamp'] = pd.to_datetime(df['timestamp'])
 
-    df.drop(columns = ['date', 'time'], axis = 1)
+    df.drop(columns=['date', 'time'], axis=1)
     print(df.columns)
     print(len(df))
     train_size = train_size
-    train, test = df.iloc[0:train_size], df.iloc[len(df)-TEST_SIZE-30:len(df)]
+    train, test = df.iloc[0:train_size], df.iloc[len(df) - TEST_SIZE - 30:len(df)]
     print(train.shape, test.shape)
 
     from sklearn.preprocessing import StandardScaler
@@ -73,14 +73,13 @@ def lstm_learn(DATA, epoch, train_size):
     start = time.time()
     history = model.fit(
         X_train, y_train,
-        epochs=epoch,#100
+        epochs=epoch,  # 100
         batch_size=32,
         validation_split=0.1,
-        callbacks = [es],
+        callbacks=[es],
         shuffle=False
     )
     z = (time.time() - start)
-
 
     plt.plot(history.history['loss'], label='Training Loss')
     plt.plot(history.history['val_loss'], label='Validation Loss')
@@ -108,14 +107,13 @@ def lstm_learn(DATA, epoch, train_size):
     test_score_df['anomaly_lstm'] = test_score_df.loss > test_score_df.threshold
     test_score_df['temp'] = test[time_steps:].temp
 
-
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=test[time_steps:].timestamp, y=test_score_df.loss,
-                        mode='lines',
-                        name='Test Loss'))
+                             mode='lines',
+                             name='Test Loss'))
     fig.add_trace(go.Scatter(x=test[time_steps:].timestamp, y=test_score_df.threshold,
-                        mode='lines',
-                        name='Threshold'))
+                             mode='lines',
+                             name='Threshold'))
     fig.update_layout(showlegend=True)
 
     anomalies = test_score_df[test_score_df.anomaly_lstm == True]
@@ -124,13 +122,12 @@ def lstm_learn(DATA, epoch, train_size):
     print(anomalies.temp)
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=test[time_steps:].timestamp, y=test[time_steps:].temp,
-                        mode='lines',
-                        name='Временной ряд'))
+                             mode='lines',
+                             name='Временной ряд'))
     fig.add_trace(go.Scatter(x=anomalies.timestamp, y=anomalies.temp,
-                        mode='markers',
-                        name='Аномалия'))
+                             mode='markers',
+                             name='Аномалия'))
     fig.update_layout(showlegend=True)
-
 
     acc_output = []
 
@@ -146,4 +143,4 @@ def lstm_learn(DATA, epoch, train_size):
     acc_output.append(recall_score(df['anomaly'][-4100:, ], test_score_df['anomaly_lstm']))
     acc_output.append(f1_score(df['anomaly'][-4100:, ], test_score_df['anomaly_lstm']))
 
-    return [fig,z, acc_output]
+    return [fig, z, acc_output]

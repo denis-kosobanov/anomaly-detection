@@ -1,7 +1,9 @@
-import numpy as np
 from typing import Tuple
+
 import pandas as pd
+
 from utils.data_preprocessing.generator import *
+
 
 def get_xgboost_x_y(
         indices: list,

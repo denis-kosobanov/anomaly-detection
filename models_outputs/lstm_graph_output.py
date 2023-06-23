@@ -1,17 +1,17 @@
-import plotly.graph_objects as go
-from utils.data_preprocessing.generator import *
-import tensorflow as tf
 import time
-import seaborn as sns
-import numpy as np
-from tensorflow import keras
-from sklearn.preprocessing import StandardScaler
-def lstm_out(DATA):
 
+import plotly.graph_objects as go
+from sklearn.preprocessing import StandardScaler
+from tensorflow import keras
+
+from utils.data_preprocessing.generator import *
+
+
+def lstm_out(DATA):
     df = DATA
     df["timestamp"] = df["date"] + " " + df["time"]
     df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df.drop(columns = ['date', 'time'], axis = 1)
+    df.drop(columns=['date', 'time'], axis=1)
 
     test = df
     scaler = StandardScaler()
@@ -22,6 +22,7 @@ def lstm_out(DATA):
     """
         создаем набор данных
     """
+
     def create_dataset(X, y, time_steps=1):
         Xs, ys = [], []
         for i in range(len(X) - time_steps):
@@ -48,7 +49,6 @@ def lstm_out(DATA):
     """
     test_mae_loss = np.mean(np.abs(X_test_pred - X_test), axis=1)
 
-
     THRESHOLD = 0.7
 
     test_score_df = pd.DataFrame(test[time_steps:])
@@ -66,11 +66,12 @@ def lstm_out(DATA):
     print(anomalies.temp)
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=test[time_steps:].timestamp, y=test[time_steps:].temp,
-                        mode='lines',
-                        name='Временной ряд'))
+                             mode='lines',
+                             name='Временной ряд'))
     fig.add_trace(go.Scatter(x=anomalies.timestamp, y=anomalies.temp,
-                        mode='markers',
-                        name='Аномалия'))
+                             mode='markers',
+                             name='Аномалия'))
     fig.update_layout(showlegend=True)
 
-    return [fig, str(abs(test_mae_loss.mean())), str(df.temp.max()), str(df.temp.min()), str(df.temp.mean()), str(len(anomalies)/(len(df))), str(z)]
+    return [fig, str(abs(test_mae_loss.mean())), str(df.temp.max()), str(df.temp.min()), str(df.temp.mean()),
+            str(len(anomalies) / (len(df))), str(z)]

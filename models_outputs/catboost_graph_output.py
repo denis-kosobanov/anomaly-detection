@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 plt.style.use('fivethirtyeight')
 plt.rcParams['lines.linewidth'] = 1.5
 import plotly.graph_objects as go
@@ -30,7 +31,6 @@ def catboost_out(DATA):
                       if column.startswith(('hours', 'DayOfTheWeek'))]
 
     data_test = df.loc[len(df) - TEST_SIZE + 1:]
-
 
     # impotance = forecaster.get_feature_importance()
     start = time.time()
@@ -76,5 +76,5 @@ def catboost_out(DATA):
                              name='Аномалия'))
     fig.update_layout(showlegend=True)
 
-
-    return [fig, str(mean), str(df.temp.max()), str(df.temp.min()), str(df.temp.mean()), str(len(a)/(len(df))), str(z)]
+    return [fig, str(mean), str(df.temp.max()), str(df.temp.min()), str(df.temp.mean()), str(len(a) / (len(df))),
+            str(z)]
