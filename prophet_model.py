@@ -1,9 +1,12 @@
-from prophet import Prophet
-import plotly.graph_objects as go
-
-from utils.data_preprocessing.generator import *
 import pickle
 import time
+
+import plotly.graph_objects as go
+from prophet import Prophet
+
+from utils.data_preprocessing.generator import *
+
+
 def prophet_learn(DATA, train_size):
     df = DATA
 
@@ -37,11 +40,11 @@ def prophet_learn(DATA, train_size):
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=test['ds'], y=test['y'],
-                        mode='lines',
-                        name='Исходный временной ряд'))
+                             mode='lines',
+                             name='Исходный временной ряд'))
     fig.add_trace(go.Scatter(x=a['ds'], y=a['y'],
-                        mode='markers',
-                        name='Аномалия'))
+                             mode='markers',
+                             name='Аномалия'))
     fig.update_layout(showlegend=True)
     acc_output = []
     from sklearn.metrics import roc_auc_score
@@ -55,6 +58,3 @@ def prophet_learn(DATA, train_size):
         acc_output.append(f1_score(test['anomaly'], test['anomaly_prophet']))
 
     return [fig, z, acc_output]
-
-
-

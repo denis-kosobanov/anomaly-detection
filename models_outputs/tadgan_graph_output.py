@@ -9,6 +9,8 @@ import plotly.graph_objects as go
 import time
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
+
+
 def get_reconstruction_segment(model, values, start, end):
     """
     Автокодировщик model получает на вход сигнал values и
@@ -48,13 +50,11 @@ def check_anomaly_pointwise_abs(ys, ys_hat, threeshold):
     return np.array(result)
 
 
-
 LATENT_VECTOR_SIZE = 10
 WINDOW_SIZE = 100
 
 
 def TadGan_out(DATA):
-
     df = DATA
 
     df["timestamp"] = df["date"] + " " + df["time"]
@@ -67,7 +67,7 @@ def TadGan_out(DATA):
     ys_test = df.temp.values[0: len(df)]
     an_test = df.anomaly.values[0: len(df)]
 
-    ys_test = MinMaxScaler((-1,1)).fit_transform(ys_test.reshape(-1,1)).squeeze()
+    ys_test = MinMaxScaler((-1, 1)).fit_transform(ys_test.reshape(-1, 1)).squeeze()
 
     ae_model = keras.models.load_model('models/tadgan_model')
     start = time.time()
@@ -76,11 +76,11 @@ def TadGan_out(DATA):
     labels_ = check_anomaly_pointwise_abs(ys_test, predictions_, 0.4)
     l_, r_ = 0, len(ys_test)
 
-    plt.figure(figsize=(20,10))
+    plt.figure(figsize=(20, 10))
     plt.plot(xs_test[l_:r_], ys_test[l_:r_], label='значения ряда')
     plt.plot(xs_test[l_:r_], predictions_[l_:r_], c='g', label="предсказанные значения")
-    plt.scatter(xs_test[l_:r_], an_test[l_:r_]-5, c='r', label="размеченные аномалии")
-    plt.scatter(xs_test[l_:r_], np.array(labels_[l_:r_])-3, c='b', label="найденные аномалии")
+    plt.scatter(xs_test[l_:r_], an_test[l_:r_] - 5, c='r', label="размеченные аномалии")
+    plt.scatter(xs_test[l_:r_], np.array(labels_[l_:r_]) - 3, c='b', label="найденные аномалии")
 
     dict = {'time': xs_test[l_:r_], 'temp': ys_test[l_:r_], 'anomaly': np.array(labels_[l_:r_])}
     anomalies = pd.DataFrame(dict)
@@ -96,4 +96,5 @@ def TadGan_out(DATA):
                              name='Аномалия'))
     fig.update_layout(showlegend=True)
 
-    return [fig, "", str(df.temp.max()), str(df.temp.min()), str(df.temp.mean()), str(len(anomaly)/(TEST_SIZE)*100), str(z)]
+    return [fig, "", str(df.temp.max()), str(df.temp.min()), str(df.temp.mean()), str(len(anomaly) / (TEST_SIZE) * 100),
+            str(z)]

@@ -1,9 +1,11 @@
-from prophet import Prophet
-import plotly.graph_objects as go
-import pandas as pd
-from utils.data_preprocessing.generator import *
 import pickle
 import time
+
+import plotly.graph_objects as go
+
+from utils.data_preprocessing.generator import *
+
+
 def prophet_out(DATA):
     df = DATA
 
@@ -35,7 +37,6 @@ def prophet_out(DATA):
     test["anomaly_prophet"] = forecast['yhat'].values - test["y"].values
     mean = test["anomaly_prophet"].mean()
 
-
     test.loc[abs(test["anomaly_prophet"]) >= 0.95, "anomaly_prophet"] = 1
     test.loc[abs(test["anomaly_prophet"]) <= 0.95, "anomaly_prophet"] = 0
 
@@ -43,12 +44,11 @@ def prophet_out(DATA):
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=test['ds'], y=test['y'],
-                        mode='lines',
-                        name='Исходный временной ряд'))
+                             mode='lines',
+                             name='Исходный временной ряд'))
     fig.add_trace(go.Scatter(x=a['ds'], y=a['y'],
-                        mode='markers',
-                        name='Аномалия'))
+                             mode='markers',
+                             name='Аномалия'))
     fig.update_layout(showlegend=True)
 
-
-    return [fig, str(abs(mean)), str(df.y.max()), str(df.y.min()), str(df.y.mean()), str(len(a)/(len(df))), str(z)]
+    return [fig, str(abs(mean)), str(df.y.max()), str(df.y.min()), str(df.y.mean()), str(len(a) / (len(df))), str(z)]

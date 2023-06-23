@@ -9,12 +9,7 @@ import time
 from utils.data_preprocessing.generator import *
 
 
-df = DATA
-df["timestamp"] = df["date"] + " " + df["time"]
 
-df['timestamp'] = pd.to_datetime(df['timestamp'])
-
-df.drop(columns = ['date', 'time'], axis = 1)
 
 
 class HoltWinters:
@@ -120,11 +115,10 @@ class HoltWinters:
             self.Season.append(seasonals[i % self.slen])
 
 
-data = df.temp
 
 # Минимизируем функцию потерь с ограничениями на параметры
 
-def timeseriesCVscore(x):
+def timeseriesCVscore(x, data):
     # вектор ошибок
     error = []
 
@@ -155,6 +149,12 @@ def timeseriesCVscore(x):
     return mean_squared_error
 
 def holt_winters_learn(DATA, train_size):
+    df = DATA
+    df["timestamp"] = df["date"] + " " + df["time"]
+
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    df.drop(columns=['date', 'time'], axis=1)
+    data = df.temp
     alpha_final, beta_final, gamma_final= [0.0020669123607705564, 2.9321831921447217e-05, 0.18868791512613298]
     # Передаем оптимальные значения модели,
     start = time.time()

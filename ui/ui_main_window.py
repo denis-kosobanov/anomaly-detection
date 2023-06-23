@@ -1,29 +1,32 @@
 import os
 from functools import partial
+
+import plotly
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout
 from statsmodels.tsa.stattools import adfuller
-import plotly
-from rnn import *
-from lstm import *
-from isoforest_svm import *
-from prophet_model import *
-from tadgan import *
-from xgboost_model import *
+
 from catboost_model import *
+
 from holt_winters import *
-from models_outputs.rnn_graph_output import rnn_out
-from models_outputs.lstm_graph_output import lstm_out
+
+from isoforest_svm import *
+from lstm import *
+from models_outputs.catboost_graph_output import catboost_out
+
 from models_outputs.isoforest_graph_output import isoforest_out
+from models_outputs.lstm_graph_output import lstm_out
 from models_outputs.prophet_graph_output import prophet_out
+from models_outputs.rnn_graph_output import rnn_out
 from models_outputs.tadgan_graph_output import TadGan_out
 from models_outputs.xgboost_output import xgboost_out
-from models_outputs.catboost_graph_output import catboost_out
-from utils.data_preprocessing.generator import *
+from prophet_model import *
+from rnn import *
+from tadgan import *
 from utils.data_preprocessing.preprocessing import reindex_and_interpolate_temp
 from utils.valedate import get_text_line_edit
-from utils.data_preprocessing.settings import *
+from xgboost_model import *
 
 
 class Ui_MainWindow(object):
@@ -292,15 +295,17 @@ class Ui_MainWindow(object):
             self.epoch_label.setVisible(True)
             self.epoch_lineEdit.setVisible(True)
 
-    # Обновить строку счеткика записей
+    # Обновить строку счетчика записей
     def update_data_counter(self):
         self.count_records.setText(str(len(self.data)))
 
+    # Предобработкать загруженные данные
     def on_preproc_button(self):
         self.data = reindex_and_interpolate_temp(self.data)
         self.log_text_edit.append(f"Данные предобработаны.\nКол-во строк изменилось на {len(self.data)}")
         self.update_data_counter()
 
+    # Обновить глобальные параметры генератора
     def update_generate_settings(self):
         lines_edit = [self.windows_lineEdit, self.slice_lineEdit, self.range_lineEdit, self.max_lineEdit,
                       self.min_lineEdit]
@@ -315,6 +320,7 @@ class Ui_MainWindow(object):
         K_MIN = get_text_line_edit(self.min_lineEdit)
         return True
 
+    # Сгенерировать аномалии на загруженных данных
     def generate_anomaly(self):
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
@@ -330,8 +336,10 @@ class Ui_MainWindow(object):
         html += plotly.offline.plot(fig, output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.log_text_edit.append("Сгенерированы синтетические аномалии " + str(self.data["anomaly"].value_counts()))
+        self.log_text_edit.append('---' * 15)
         self.plot_widget.setHtml(html)
 
+    # Обучение модели
     def learn(self):
         mod = ""
         if self.model_rb_1.isChecked() == True:
@@ -363,15 +371,16 @@ class Ui_MainWindow(object):
         html += '</body></html>'
         self.plot_widget.setHtml(html)
 
-        self.log_text_edit.append("модель " + mod + " переобучена c параметрами:")
+        self.log_text_edit.append("Модель " + mod + " переобучена c параметрами:")
         self.log_text_edit.append("Эпох: " + self.epoch_lineEdit.text())
         self.log_text_edit.append("Размер обучающей выборки: " + self.train_sample_lineEdit.text())
         self.log_text_edit.append("время обучения: " + str(fig[1]))
         self.log_text_edit.append("точность по roc: " + str(fig[2][1]))
         self.log_text_edit.append("точность по pr: " + str(fig[2][2]))
         self.log_text_edit.append("точность по f1: " + str(fig[2][3]))
+        self.log_text_edit.append('---' * 15)
 
-
+    # Запуск модели
     def veltest(self):
         mod = ""
         if self.model_rb_1.isChecked() == True:
@@ -396,9 +405,11 @@ class Ui_MainWindow(object):
             mod = "catboost"
             fig = catboost_out(self.data)
 
+
         elif self.model_rb_7.isChecked() == True:
             mod = "holt_winters"
             fig = holt_winters_learn(self.data, None)
+
 
         html = '<html><body>'
         html += plotly.offline.plot(fig[0], output_type='div', include_plotlyjs='cdn')
@@ -408,11 +419,19 @@ class Ui_MainWindow(object):
         self.log_text_edit.append("Время работы: " + fig[6])
         if mod != "tadgan" or mod != "holt_winters":
             self.log_text_edit.append("Средняя ошибка предсказания: " + fig[1])
+
         if mod != "holt_winters":
             self.log_text_edit.append("Максимальная температура: " + fig[2])
             self.log_text_edit.append("Минимальная температура: " + fig[3])
             self.log_text_edit.append("Средняя температура: " + fig[4])
             self.log_text_edit.append("Процент аномалий в ряде: " + fig[5] + "%")
+
+        self.log_text_edit.append("Максимальная температура: " + fig[2])
+        self.log_text_edit.append("Минимальная температура: " + fig[3])
+        self.log_text_edit.append("Средняя температура: " + fig[4])
+        self.log_text_edit.append("Процент аномалий в ряде: " + fig[5] + "%")
+        self.log_text_edit.append('---' * 15)
+
 
     def load_file(self):
         _translate = QtCore.QCoreApplication.translate
@@ -456,8 +475,6 @@ class Ui_MainWindow(object):
 
         return fname
 
-
-
     def test_stationarity(self):
         dftest = adfuller(self.data['temp'], autolag='AIC')
         dfoutput = pd.Series(dftest[0:4],
@@ -475,5 +492,3 @@ class Ui_MainWindow(object):
         else:
             self.log_text_edit.append("Ряд не стационарен")
             self.log_text_edit.append('---' * 15)
-
-

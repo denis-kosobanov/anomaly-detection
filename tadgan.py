@@ -1,15 +1,12 @@
+import time
+import plotly.graph_objects as go
 import tensorflow as tf
 import tensorflow.keras.layers as L
-from tensorflow.keras.models import Sequential, Model
-from utils.data_preprocessing.generator import *
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import plotly.graph_objects as go
-from tqdm import tqdm
-import time
-from sklearn.metrics import f1_score
 from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential, Model
+
+from utils.data_preprocessing.generator import *
+
 
 def get_reconstruction_segment(model, values, start, end):
     """
@@ -32,7 +29,6 @@ def get_reconstruction_segment(model, values, start, end):
     return np.array(data)
 
 
-
 def check_anomaly_pointwise_abs(ys, ys_hat, threeshold):
     """
         Поточечное сравнение, модуль расстояния
@@ -45,7 +41,6 @@ def check_anomaly_pointwise_abs(ys, ys_hat, threeshold):
             result.append(0)
 
     return np.array(result)
-
 
 
 LATENT_VECTOR_SIZE = 10
@@ -201,8 +196,9 @@ cx_g_Loss = []
 cz_g_Loss = []
 
 E, G, Cx, Cz, ae_model, cx_gan_model, cz_gan_model = init_model()
-def TadGan_learn(DATA, epochs, train_size):
 
+
+def TadGan_learn(DATA, epochs, train_size):
     df = DATA
 
     df["timestamp"] = df["date"] + " " + df["time"]
@@ -211,14 +207,13 @@ def TadGan_learn(DATA, epochs, train_size):
 
     df = df[["temp", "anomaly"]]
 
-    ys_train = df.temp.values[:len(df)-TEST_SIZE]
-    xs_test = df.index.values[len(df)-TEST_SIZE:]
-    ys_test = df.temp.values[len(df)-TEST_SIZE:]
-    an_test = df.anomaly.values[len(df)-TEST_SIZE:]
+    ys_train = df.temp.values[:len(df) - TEST_SIZE]
+    xs_test = df.index.values[len(df) - TEST_SIZE:]
+    ys_test = df.temp.values[len(df) - TEST_SIZE:]
+    an_test = df.anomaly.values[len(df) - TEST_SIZE:]
 
-
-    ys_train = MinMaxScaler((-1,1)).fit_transform(ys_train.reshape(-1,1)).squeeze()
-    ys_test = MinMaxScaler((-1,1)).fit_transform(ys_test.reshape(-1,1)).squeeze()
+    ys_train = MinMaxScaler((-1, 1)).fit_transform(ys_train.reshape(-1, 1)).squeeze()
+    ys_test = MinMaxScaler((-1, 1)).fit_transform(ys_test.reshape(-1, 1)).squeeze()
 
     start = time.time()
     train_model(ys_train, epochs, 128)
@@ -229,11 +224,14 @@ def TadGan_learn(DATA, epochs, train_size):
     labs = check_anomaly_pointwise_abs(ys_test, preds, 0.4)
     left, right = 0, len(ys_test)
 
+
     plt.figure(figsize=(20,10))
     plt.plot(xs_test[left:right], ys_test[left:right], label='значения ряда')
     plt.plot(xs_test[left:right], preds[left:right], c='g', label="предсказанные значения")
     plt.scatter(xs_test[left:right], an_test[left:right]-5, c='r', label="размеченные аномалии")
     plt.scatter(xs_test[left:right], np.array(labs[left:right])-3, c='b', label="найденные аномалии")
+
+
 
     dict = {'time': xs_test[left:right], 'temp': ys_test[left:right], 'anomaly': np.array(labs[left:right])}
     anomalies = pd.DataFrame(dict)
