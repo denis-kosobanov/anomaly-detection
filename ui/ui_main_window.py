@@ -3,6 +3,7 @@ from functools import partial
 
 import plotly
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayout, QGroupBox, QHBoxLayout
 from statsmodels.tsa.stattools import adfuller
@@ -239,6 +240,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Anomaly Detection"))
+        MainWindow.setWindowIcon(QIcon('resources/icon.png'))
         self.open_button.setText(_translate("MainWindow", "Открыть"))
         self.label.setText(_translate("MainWindow", "Выбрать файл с данными"))
         self.filename_label.setText(_translate("MainWindow", "Название файла"))
