@@ -9,9 +9,13 @@ from PyQt5.QtWidgets import QScrollArea, QTextEdit, QLabel, QLineEdit, QGridLayo
 from statsmodels.tsa.stattools import adfuller
 
 from catboost_model import *
+
+from holt_winters import *
+
 from isoforest_svm import *
 from lstm import *
 from models_outputs.catboost_graph_output import catboost_out
+
 from models_outputs.isoforest_graph_output import isoforest_out
 from models_outputs.lstm_graph_output import lstm_out
 from models_outputs.prophet_graph_output import prophet_out
@@ -322,7 +326,7 @@ class Ui_MainWindow(object):
     def generate_anomaly(self):
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
-        # self.data["anomaly"].iloc[-4100:, ] = ensemble["target"].iloc[-4100:, ]
+
         if not self.update_generate_settings():
             return
         self.data = generate_anomaly_data(self.data)
@@ -361,6 +365,9 @@ class Ui_MainWindow(object):
         elif self.model_rb_6.isChecked() == True:
             mod = "catboost"
             fig = catboost_learn(self.data, self.train_sample_lineEdit.text())
+        elif self.model_rb_7.isChecked() == True:
+            mod = "holt_winters"
+            fig = holt_winters_learn(self.data, self.train_sample_lineEdit.text())
         html = '<html><body>'
         html += plotly.offline.plot(fig[0], output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
@@ -399,19 +406,29 @@ class Ui_MainWindow(object):
         elif self.model_rb_6.isChecked() == True:
             mod = "catboost"
             fig = catboost_out(self.data)
+
+
+        elif self.model_rb_7.isChecked() == True:
+            mod = "holt_winters"
+            fig = holt_winters_learn(self.data, None)
+
+
         html = '<html><body>'
         html += plotly.offline.plot(fig[0], output_type='div', include_plotlyjs='cdn')
         html += '</body></html>'
         self.plot_widget.setHtml(html)
         self.log_text_edit.append("Запуск модели")
-        self.log_text_edit.append("Время работы: " + fig[6])
         if mod != "tadgan" or mod != "holt_winters":
             self.log_text_edit.append("Средняя ошибка предсказания: " + fig[1])
-        self.log_text_edit.append("Максимальная температура: " + fig[2])
-        self.log_text_edit.append("Минимальная температура: " + fig[3])
-        self.log_text_edit.append("Средняя температура: " + fig[4])
-        self.log_text_edit.append("Процент аномалий в ряде: " + fig[5] + "%")
-        self.log_text_edit.append('---' * 15)
+
+        if mod != "holt_winters":
+            self.log_text_edit.append("Время работы: " + fig[6])
+            self.log_text_edit.append("Максимальная температура: " + fig[2])
+            self.log_text_edit.append("Минимальная температура: " + fig[3])
+            self.log_text_edit.append("Средняя температура: " + fig[4])
+            self.log_text_edit.append("Процент аномалий в ряде: " + fig[5] + "%")
+
+
 
     def load_file(self):
         _translate = QtCore.QCoreApplication.translate
@@ -422,7 +439,6 @@ class Ui_MainWindow(object):
         self.data["timestamp"] = self.data["date"] + " " + self.data["time"]
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
         if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "412_1"):
-            print(fname[0].split('/')[len(fname[0].split('/')) - 1])
             ensemble = pd.read_csv(r"outputs/ensemble_out_412.csv", sep=',')
         if (fname[0].split('/')[len(fname[0].split('/')) - 1] != "412_2"):
             ensemble = pd.read_csv(r"outputs/ensemble_out_412_second.csv", sep=',')

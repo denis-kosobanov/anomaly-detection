@@ -37,15 +37,14 @@ def xgboost_learn(DATA, train_size):
     }
     lags_grid = [48, 72]
 
-    # Create indices. Must be passed to function that creates (X,Y) pairs so that
-    # it knows where to slice the data
+
     training_indices = xgb_utils.get_indices_entire_sequence(
         data=training_data,
         window_size=hyperparameters["in_length"] + target_sequence_length,
         step_size=hyperparameters["step_size"]
     )
 
-    # Obtain (X,Y) pairs of training data
+    # Получение (X,Y) пар тренировочных данных
     x_train, y_train = xgb_utils.get_xgboost_x_y(
         indices=training_indices,
         data=training_data[hyperparameters["selected_features"]].to_numpy(),
@@ -59,7 +58,7 @@ def xgboost_learn(DATA, train_size):
         step_size=24
     )
 
-    # Obtain (X,Y) pairs of test data
+    # Получение (X,Y) пар тестовых данных
     x_test, y_test = xgb_utils.get_xgboost_x_y(
         indices=test_indices,
         data=test_data[hyperparameters["selected_features"]].to_numpy(),
